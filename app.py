@@ -1,4 +1,4 @@
-from flask import Flask, render_template, url_for
+from flask import Flask, render_template, url_for, redirect
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import UserMixin
 
@@ -11,8 +11,11 @@ db = SQLAlchemy(app)
 class User(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(20), nullable=False)
-    username = db.Coumn(db.String(20), nullable=False)
-    password = db.Column(db.String(50), nullable=False)
+    username = db.Column(db.String(20), nullable=False, unique=True)
+    password = db.Column(db.String(100), nullable=False)
+
+    def __repr__(self):
+        return f"{self.id} - {self.username}"
 
 
 @app.route('/')
@@ -32,4 +35,6 @@ def generate():
     return render_template("generate.html")
 
 if __name__ == "__main__":
+    with app.app_context():
+        db.create_all()
     app.run(debug=True)
