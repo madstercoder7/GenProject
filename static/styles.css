@@ -1,0 +1,33 @@
+/* static/styles.css */
+body {
+    background-color: #f8f9fa;
+    font-family: Arial, sans-serif;
+}
+
+.navbar-brand .blue { color: #007bff; }
+.navbar-brand .red { color: #dc3545; }
+.navbar-brand .yellow { color: #ffc107; }
+
+footer {
+    text-align: center;
+    padding: 20px;
+    background-color: #f1f1f1;
+    margin-top: 20px;
+}
+
+.idea-content {
+    line-height: 1.6;
+}
+
+.idea-content h4 {
+    margin-top: 20px;
+    color: #007bff;
+}
+
+.container {
+    max-width: 800px;
+}
+
+.alert {
+    margin-bottom: 20px;
+}
