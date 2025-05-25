@@ -1,33 +1,72 @@
-/* static/styles.css */
 body {
-    background-color: #f8f9fa;
-    font-family: Arial, sans-serif;
+    background-color: #0f172a;
+    color: #f8fafc;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    overflow-x: hidden;
 }
 
-.navbar-brand .blue { color: #007bff; }
-.navbar-brand .red { color: #dc3545; }
-.navbar-brand .yellow { color: #ffc107; }
+h1, h2 {
+    color: #38bdf8;
+}
+
+a {
+    text-decoration: none;
+}
+
+.btn-primary, .btn-success {
+    background-color: #38bdf8;
+    border: none;
+}
+
+.btn-primary:hover, .btn-success:hover {
+    background-color: #0ea5e9;
+}
+
+.form-container {
+    background-color: rgba(255, 255, 255, 0.05);
+    padding: 30px;
+    border-radius: 20px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.37);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    max-width: 400px;
+}
+
+.hero-blob {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 400px;
+    height: 400px;
+    background: linear-gradient(135deg, #38bdf8, #0ea5e9);
+    border-radius: 50%;
+    filter: blur(150px);
+    opacity: 0.7;
+    animation: float 6s ease-in-out infinite;
+    z-index: -1;
+}
+
+@keyframes float {
+    0% {
+        transform: translate(0, 0);
+    }
+    50% {
+        transform: translate(30px, 20px);
+    }
+    100% {
+        transform: translate(0, 0);
+    }
+}
 
 footer {
+    position: fixed;
+    left: 0;
+    bottom: 0;
+    width: 100%;
     text-align: center;
     padding: 20px;
-    background-color: #f1f1f1;
+    background-color: #1e293b;
+    color: white;
     margin-top: 20px;
-}
-
-.idea-content {
-    line-height: 1.6;
-}
-
-.idea-content h4 {
-    margin-top: 20px;
-    color: #007bff;
-}
-
-.container {
-    max-width: 800px;
-}
-
-.alert {
-    margin-bottom: 20px;
 }
