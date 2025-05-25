@@ -1,24 +1,25 @@
 {% extends 'base.html' %}
 
-{% block title %}Register{% endblock %}
+{% block title %}Register - GenProject{% endblock %}
 
 {% block content %}
-    <h1>Register Page</h1>
+<div class="form-container mx-auto mt-5">
+    <h2 class="mb-4 text-center">Create an account</h2>
     <form method="POST">
-        <div class="container">
-            <div class="mb-3">
-                <label for="name" class="form-label">Name</label>
-                <input name="name" type="text" class="form-control" id="name" required>
-            </div>
-            <div class="mb-3">
-                <label for="username" class="form-label">Username</label>
-                <input name="username" type="text" class="form-control" id="username" required>
-            </div>
-            <div class="mb-3">
-                <label for="password" class="form-label">Password</label>
-                <input name="password" type="password" class="form-control" id="password" required>
-            </div>
-            <button type="submit" class="btn btn-primary">Submit</button>
+        <div class="mb-3">
+            <label for="name" class="form-label">Full Name</label>
+            <input name="name" type="text" class="form-control" id="name" placeholder="Your full name" required autofocus>
         </div>
+        <div class="mb-3">
+            <label for="username" class="form-label">Username</label>
+            <input name="username" type="text" class="form-control" id="username" placeholder="Choose a username" required>
+        </div>
+        <div class="mb-3">
+            <label for="password" class="form-label">Password</label>
+            <input name="password" type="password" class="form-control" id="password" placeholder="Create a password" minlength="6">
+            <div class="form-text">Password must be at least 6 characters</div>
+        </div>
+        <button type="submit" class="btn btn-primary w-100">Submit</button>
     </form>
+</div>
 {% endblock %}

@@ -1,7 +1,14 @@
 {% extends 'base.html' %}
 
-{% block title %}Home{% endblock %}
+{% block title %}GenProject - Home{% endblock %}
 
-{% block main %}
-
+{% block content %}
+<div class="text-center">
+    <h1 class="display-4">Welcome to GenProject</h1>
+    <p class="lead">Effortlessly generate AI project ideas tailored to your needs.</p>
+    {% if not session["user_id"] %}
+        <a href="{{ url_for('register') }}" class="btn btn-primary btn-lg">Get Started</a>
+    {% endif %}
+</div>
+<div class="hero-blob" id="blob"></div>
 {% endblock %}
