@@ -2,11 +2,13 @@ from flask import Flask, render_template, url_for, redirect, request, session, f
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
 from groq_utils import generate_project_idea
+from datetime import datetime
+import os
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = "sqlite:///genproj.db"
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.config['SECRET_KEY'] = 'SECRET_KEY'
+app.config['SECRET_KEY'] = os.getenv("SECRET_KEY")
 db = SQLAlchemy(app)
 
 class User(db.Model):
@@ -16,8 +18,17 @@ class User(db.Model):
     password = db.Column(db.String(100), nullable=False)
 
     def __repr__(self):
-        return f"{self.id} - {self.username}"
+        return f"<User id ={self.id}, username={self.username}>"
 
+class ProjectIdea(db.Model):
+    project_id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    topic = db.Column(db.String(100), nullable=False)
+    content = db.Column(db.Text, nullable=False)
+    timestamp = db.Column(db.DateTime, default=datetime.now)
+
+    def __repr__(self):
+        return f"{self.topic}"
 
 @app.route('/')
 def index():
@@ -83,8 +94,13 @@ def generate():
         if idea.startswith("Error"):
             flash(idea, "danger")
             idea = None
+        else:
+            new_idea = ProjectIdea(user_id=session["user_id"], topic=topic, content=idea)
+            db.session.add(new_idea)
+            db.session.commit()
 
-    return render_template("generate.html", idea=idea, topic=topic)
+    history = ProjectIdea.query.filter_by(user_id=session["user_id"]).order_by(ProjectIdea.timestamp.desc()).all()
+    return render_template("generate.html", idea=idea, topic=topic, history=history)
 
 if __name__ == "__main__":
     with app.app_context():
