@@ -1,8 +1,5 @@
 body {
-    background-color: #0f172a;
-    color: #f8fafc;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    overflow-x: hidden;
+    color: white;
 }
 
 h1, h2 {
@@ -23,6 +20,7 @@ a {
 }
 
 .form-container {
+    color: white;
     background-color: rgba(255, 255, 255, 0.05);
     padding: 30px;
     border-radius: 20px;
@@ -33,9 +31,8 @@ a {
     max-width: 400px;
 }
 
-
-
 footer {
+    position: relative;
     left: 0;
     bottom: 0;
     width: 100%;

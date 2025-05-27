@@ -29,10 +29,10 @@
                         </li>
                     </ul>
                     <div class="cta-buttons">
-                        <a href="#" class="btn-gradient">
+                        <a href="{{ url_for('register') }}" class="btn-gradient">
                             <i class="fas fa-rocket"></i>Get Started Free
                         </a>
-                        <a href="#" class="btn-outline-glass">
+                        <a href="{{ url_for('login') }}" class="btn-outline-glass">
                             <i class="fas fa-sign-in-alt"></i>Login
                         </a>
                     </div>
@@ -49,23 +49,23 @@
                         <span class="code-title">project_idea.py</span>
                     </div>
                     <div class="code-content">
-                        <pre><code><span class="code-comment"># AI-Generated Project Idea</span>
+<pre><code><span class="code-comment"># AI-Generated Project Idea</span>
 <span class="code-keyword">class</span> <span class="code-class">WeatherApp</span>:
-<span class="code-keyword">def</span> <span class="code-function">__init__</span>(self):
-    self.api_key = <span class="code-string">"your_api_key"</span>
-    self.base_url = <span class="code-string">"api.openweather.com"</span>
+    <span class="code-keyword">def</span> <span class="code-function">__init__</span>(self):
+        self.api_key = <span class="code-string">"your_api_key"</span>
+        self.base_url = <span class="code-string">"api.openweather.com"</span>
 
-<span class="code-keyword">def</span> <span class="code-function">get_weather</span>(self, city):
-    <span class="code-comment"># Fetch weather data from API</span>
-    response = requests.get(
-        f<span class="code-string">"{self.base_url}/data/2.5/weather"</span>,
-        params={<span class="code-string">"q"</span>: city, <span class="code-string">"appid"</span>: self.api_key}
-    )
-    <span class="code-keyword">return</span> response.json()
+    <span class="code-keyword">def</span> <span class="code-function">get_weather</span>(self, city):
+        <span class="code-comment"># Fetch weather data from API</span>
+        response = requests.get(
+            f<span class="code-string">"{self.base_url}/data/2.5/weather"</span>,
+            params={<span class="code-string">"q"</span>: city, <span class="code-string">"appid"</span>: self.api_key}
+        )
+        <span class="code-keyword">return</span> response.json()
 
-<span class="code-keyword">def</span> <span class="code-function">display_forecast</span>(self, data):
-    <span class="code-comment"># Beautiful weather display</span>
-    <span class="code-keyword">print</span>(f<span class="code-string">"🌤️ {data['name']}: {data['main']['temp']}°C"</span>)</code></pre>
+    <span class="code-keyword">def</span> <span class="code-function">display_forecast</span>(self, data):
+        <span class="code-comment"># Beautiful weather display</span>
+        <span class="code-keyword">print</span>(f<span class="code-string">"🌤️ {data['name']}: {data['main']['temp']}°C"</span>)</code></pre>
                     </div>
                 </div>
             </div>
