@@ -1,14 +1,114 @@
 {% extends 'base.html' %}
 
-{% block title %}GenProject - Home{% endblock %}
+{% block title %}GenProject: Home{% endblock %} 
 
 {% block content %}
-<div class="text-center">
-    <h1 class="display-4">Welcome to GenProject</h1>
-    <p class="lead">Effortlessly generate AI project ideas tailored to your needs.</p>
-    {% if not session["user_id"] %}
-        <a href="{{ url_for('register') }}" class="btn btn-primary btn-lg">Get Started</a>
-    {% endif %}
+<div class="hero-section">
+    <div class="container hero-content">
+        <div class="row align-items-center">
+            <div class="col-lg-6 mb-4">
+                <div class="glass-card">
+                    <h1 class="hero-title">
+                        Welcome to <span class="gradient-text">GenProject</span>
+                    </h1>
+                    <p class="hero-subtitle">
+                        Stuck on what to build next? Let AI generate creative, detailed coding project ideas tailored to your interests and skill level.
+                    </p>
+                    <ul class="feature-list">
+                        <li class="feature-item">
+                            <i class="fas fa-robot"></i>
+                            AI powered project suggestions
+                        </li>
+                        <li class="feature-item">
+                            <i class="fas fa-history"></i>
+                            Save and track your ideas
+                        </li>
+                        <li class="feature-item">
+                            <i class="fas fa-code"></i>
+                            Detailed implementation guides
+                        </li>
+                    </ul>
+                    <div class="cta-buttons">
+                        <a href="#" class="btn-gradient">
+                            <i class="fas fa-rocket"></i>Get Started Free
+                        </a>
+                        <a href="#" class="btn-outline-glass">
+                            <i class="fas fa-sign-in-alt"></i>Login
+                        </a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-6">
+                <div class="code-preview">
+                    <div class="code-header">
+                        <div class="code-dots">
+                            <span></span>
+                            <span></span>
+                            <span></span>
+                        </div>
+                        <span class="code-title">project_idea.py</span>
+                    </div>
+                    <div class="code-content">
+                        <pre><code><span class="code-comment"># AI-Generated Project Idea</span>
+<span class="code-keyword">class</span> <span class="code-class">WeatherApp</span>:
+<span class="code-keyword">def</span> <span class="code-function">__init__</span>(self):
+    self.api_key = <span class="code-string">"your_api_key"</span>
+    self.base_url = <span class="code-string">"api.openweather.com"</span>
+
+<span class="code-keyword">def</span> <span class="code-function">get_weather</span>(self, city):
+    <span class="code-comment"># Fetch weather data from API</span>
+    response = requests.get(
+        f<span class="code-string">"{self.base_url}/data/2.5/weather"</span>,
+        params={<span class="code-string">"q"</span>: city, <span class="code-string">"appid"</span>: self.api_key}
+    )
+    <span class="code-keyword">return</span> response.json()
+
+<span class="code-keyword">def</span> <span class="code-function">display_forecast</span>(self, data):
+    <span class="code-comment"># Beautiful weather display</span>
+    <span class="code-keyword">print</span>(f<span class="code-string">"🌤️ {data['name']}: {data['main']['temp']}°C"</span>)</code></pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="scroll-indicator">
+        <i class="fas fa-chevron-down"></i>
+    </div>
 </div>
-<div class="hero-blob" id="blob"></div>
+
+<section class="features-section">
+    <div class="container">
+        <div class="row">
+            <div class="col-md-4 mb-4">
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-brain"></i>
+                    </div>
+                    <h4>Smart Suggestions</h4>
+                    <p>Get personalized project ideas based on your chosen topics and technologies with advanced AI algorithms.</p>
+                </div>
+            </div>
+            <div class="col-md-4 mb-4">
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-list-check"></i>
+                    </div>
+                    <h4>Detailed Guidance</h4>
+                    <p>Each idea comes with comprehensive features, technical challenges, and step-by-step implementation roadmaps.</p>
+                </div>
+            </div>
+            <div class="col-md-4 mb-4">
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-bookmark"></i>
+                    </div>
+                    <h4>Save & Organize</h4>
+                    <p>Keep track of all your generated ideas with smart categorization and come back to them anytime.</p>
+                </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
 {% endblock %}
