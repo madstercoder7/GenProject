@@ -32,15 +32,13 @@ a {
 }
 
 footer {
-    position: absolute;
-    left: 0;
-    bottom: 0;
+    position: relative;
     width: 100%;
     text-align: center;
     padding: 20px;
     background-color: #1e293b;
     color: white;
-    margin-top: 20px;
+    margin-top: 40px;
 }
 
 /* index.html */
@@ -434,4 +432,24 @@ body {
     color: white;
     height: 1rem;
     font-size: small;
+}
+
+.idea-content h1, .idea-content h2, .idea-content h3, .idea-content h4, .idea-content h5 {
+    color: #38bdf8;
+    margin-top: 1.2rem;
+    margin-bottom: 0.5rem;
+}
+
+.idea-content p {
+    margin-bottom: 0.75rem;
+    color: #ddd;
+}
+
+.idea-content ul {
+    padding-left: 1.5rem;
+    margin-bottom: 1rem;
+}
+
+.idea-content li {
+    margin-bottom: 0.3rem;
 }

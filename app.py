@@ -5,6 +5,8 @@ from utils import generate_project_idea, login_required, validate_input
 from datetime import datetime
 import os
 import secrets
+import markdown
+from markupsafe import Markup
 
 app = Flask(__name__)
 
@@ -160,7 +162,8 @@ def generate():
         history = []
         flash("Could not load history", "warning")
 
-    return render_template("generate.html", idea=idea, topic=topic, history=history)
+    rendered_idea = Markup(markdown.markdown(idea)) if idea else None
+    return render_template("generate.html", idea=rendered_idea, topic=topic, history=history)
 
 @app.route('/delete_idea/<int:idea_id>')
 @login_required

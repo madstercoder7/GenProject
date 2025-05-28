@@ -27,6 +27,8 @@
         height: 100vh;
         overflow-y: auto;
         padding: 1rem;
+        max-height: calc(100vh - 56px);
+        overflow-y: auto;
     }
 
     .toggle-btn {
@@ -64,7 +66,7 @@
                     {% for h in history %}
                         <div class="mb-3">
                             <strong>{{ h.topic }}</strong><br>
-                            <small class="text-muted">{{ h.timestamp.strftime('%Y-%m-%d %H:%M') }}</small>
+                            <small>{{ h.timestamp.strftime('%Y-%m-%d %H:%M') }}</small>
                             <details>
                                 <summary class="text-info">View</summary>
                                 <div class="small mt-1 text-light">
@@ -81,7 +83,7 @@
 
         <!-- Main content -->
         <div class="col-md-9 offset-md-0 px-4">
-            <button class="btn btn-outline-light toggle-btn mb-3" onclick="toggleSidebar()">☰ History</button>
+            <button class="btn btn-outline-light toggle-btn mb-3" onclick="toggleSidebar()" ondblclick="toggleSidebar()">☰ History</button>
             <h2 class="text-info">Generate Project Idea</h2>
             <form method="POST" class="mb-4">
                 <div class="mb-3">
@@ -95,18 +97,11 @@
             <div class="p-4 border rounded bg-dark-content mb-4">
                 <h3 class="text-info">Project Idea</h3>
                 <div class="idea-content">
-                    {{ idea | replace('\n\n', '<br><br>') | safe }}
+                    {{ idea | safe }}
                 </div>
             </div>
             {% endif %}
         </div>
     </div>
 </div>
-
-<script>
-    function toggleSidebar() {
-        const sidebar = document.getElementById('sidebar');
-        sidebar.classList.toggle('active');
-    }
-</script>
 {% endblock %}
