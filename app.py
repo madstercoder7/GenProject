@@ -8,7 +8,8 @@ import secrets
 
 app = Flask(__name__)
 
-app.config['SQLALCHEMY_DATABASE_URI'] = "sqlite:///genproj.db"
+basedir = os.path.abspath(os.path.dirname(__file__))
+app.config['SQLALCHEMY_DATABASE_URI'] = f"sqlite:///{os.path.join(basedir, 'genproj.db')}"
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SECRET_KEY'] = os.getenv("SECRET_KEY", secrets.token_hex(16))
 
@@ -36,6 +37,9 @@ class ProjectIdea(db.Model):
 
     def __repr__(self):
         return f"Project Idea: {self.topic}"
+    
+with app.app_context():
+    db.create_all()
 
 # Routes
 @app.route('/')
@@ -55,7 +59,7 @@ def register():
         if len(password) < 6:
             errors.append("Password must be at least 6 characters long")
         
-        if len(username < 3):
+        if len(username) < 3:
             errors.append("Username must be at least 3 characters long")
 
         if len(username) > 50:
@@ -101,7 +105,7 @@ def login():
         if user and check_password_hash(user.password, password):
             session["user_id"] = user.id
             session["username"] = user.username
-            flash("Welcome back, {user.name}", "success")
+            flash(f"Welcome back, {user.name}", "success")
             return redirect(url_for("generate"))
         else:
             flash("Invalid username and passsword", "danger")
@@ -177,6 +181,4 @@ def delete_idea(idea_id):
     return redirect(url_for("generate"))
 
 if __name__ == "__main__":
-    with app.app_context():
-        db.create_all()
     app.run(debug=True)

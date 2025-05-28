@@ -32,7 +32,7 @@ a {
 }
 
 footer {
-    position: relative;
+    position: absolute;
     left: 0;
     bottom: 0;
     width: 100%;
@@ -366,6 +366,10 @@ body {
     z-index: 1;
 }
 
+.main-content {
+    margin-top: 5rem;
+}
+
 .feature-card:hover .feature-icon {
     transform: rotateY(360deg);
     box-shadow: 0 15px 40px rgba(79, 172, 254, 0.5);
@@ -424,4 +428,10 @@ body {
     0%, 20%, 50%, 80%, 100% { transform: translateX(-50%) translateY(0); }
     40% { transform: translateX(-50%) translateY(-10px); }
     60% { transform: translateX(-50%) translateY(-5px); }
+}
+
+.form-info {
+    color: white;
+    height: 1rem;
+    font-size: small;
 }
