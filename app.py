@@ -1,5 +1,6 @@
 from flask import Flask, render_template, url_for, redirect, request, session, flash
 from flask_sqlalchemy import SQLAlchemy
+from flask_migrate import Migrate
 from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, SubmitField
 from wtforms.validators import DataRequired, Length
@@ -24,6 +25,7 @@ if not app.config['SECRET_KEY']:
     raise ValueError("No SECRET_KEY set for Flask application")
 
 db = SQLAlchemy(app)
+migrate = Migrate(app, db)  # Initialize Flask-Migrate
 
 # Forms
 class RegisterForm(FlaskForm):
@@ -62,9 +64,6 @@ class ProjectIdea(db.Model):
 
     def __repr__(self):
         return f"Project Idea: {self.topic}"
-
-with app.app_context():
-    db.create_all()
 
 # Routes
 @app.route('/')
