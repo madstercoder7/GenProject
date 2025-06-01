@@ -70,9 +70,12 @@
                             <details>
                                 <summary class="text-info">View</summary>
                                 <div class="small mt-1 text-light">
-                                    {{ h.content[:150] }}{{ '...' if h.content|length > 150 }}
+                                    {{ h.content | truncate(150, True, '...') }}
                                 </div>
                             </details>
+                            <button class="btn btn-sm btn-danger delete-idea" data-idea-id="{{ h.id }}">
+                                <i class="fa-solid fa-trash-can"></i> Delete
+                            </button>
                         </div>
                     {% endfor %}
                 {% else %}
@@ -86,11 +89,12 @@
             <button class="btn btn-outline-light toggle-btn mb-3" onclick="toggleSidebar()" ondblclick="toggleSidebar()">☰ History</button>
             <h2 class="text-info">Generate Project Idea</h2>
             <form method="POST" class="mb-4">
+                {{ form.hidden_tag() }}
                 <div class="mb-3">
-                    <label for="topic" class="form-label">Topic</label>
-                    <input type="text" name="topic" id="topic" placeholder="(eg., Python, AI, Games...)" class="form-control" value="{{ topic or '' }}" required>
+                    <label for="topic" class="form-label">{{ form.topic.label }}</label>
+                    {{ form.topic(class="form-control", placeholder="(eg., Python, AI, Games...)") }}
                 </div>
-                <button type="submit" class="btn btn-primary">Generate</button>
+                {{ form.submit(class="btn btn-primary") }}
             </form>
 
             {% if idea %}
@@ -102,6 +106,16 @@
             </div>
             {% endif %}
         </div>
+    </div>
+</div>
+
+<div class="position-fixed bottom-0 end-0 p-3" style="z-index: 11">
+    <div id="deleteToast" class="toast" role="alert" data-bs-autohide="true" data-bs-delay="3000">
+        <div class="toast-header">
+            <strong class="me-auto">Notification</strong>
+            <button type="button" class="btn-close" data-bs-dismiss="toast"></button>
+        </div>
+        <div class="toast-body"></div>
     </div>
 </div>
 {% endblock %}

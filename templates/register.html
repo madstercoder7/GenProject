@@ -6,20 +6,21 @@
 <div class="form-container mx-auto mt-5">
     <h2 class="mb-4 text-center">Create an account</h2>
     <form method="POST">
+    {{ form.hidden_tag() }}
         <div class="mb-3">
-            <label for="name" class="form-label">Full Name</label>
-            <input name="name" type="text" class="form-control" id="name" placeholder="Your full name" required autofocus>
+            <label for="name" class="form-label">{{ form.name.label }}</label>
+            {{ form.name(class="form-control", placeholder="Your full name") }}
         </div>
         <div class="mb-3">
-            <label for="username" class="form-label">Username</label>
-            <input name="username" type="text" class="form-control" id="username" placeholder="Choose a username" required>
+            <label for="username" class="form-label">{{ form.username.label }}</label>
+            {{ form.username(class="form-control", placeholder="Choose a username") }}
         </div>
         <div class="mb-3">
-            <label for="password" class="form-label">Password</label>
-            <input name="password" type="password" class="form-control" id="password" placeholder="Create a password" minlength="6">
+            <label for="password" class="form-label">{{ form.password.label }}</label>
+            {{ form.password(class="form-control", placeholder="Create a password") }}
             <p class="form-info">Password must be at least 6 characters</p>
         </div>
-        <button type="submit" class="btn btn-primary w-100">Submit</button>
+        {{ form.submit(class="btn btn-primary w-100") }}
     </form>
 </div>
 {% endblock %}

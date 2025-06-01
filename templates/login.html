@@ -6,15 +6,16 @@
 <div class="form-container mx-auto mt-5">
     <h2 class="mb-4 text-center">Login to your account</h2>
     <form method="POST">
+        {{ form.hidden_tag() }}
         <div class="mb-3">
-            <label for="username" class="form-label">Username</label>
-            <input type="text" name="username" class="form-control" required>
+            <label for="username" class="form-label">{{ form.username.label }}</label>
+            {{ form.username(class="form-control", placeholder="Enter your username") }}
         </div>
         <div class="mb-3">
-            <label for="password" class="form-label">Password</label>
-            <input type="password" name="password" class="form-control" required>
+            <label for="password" class="form-label">{{ form.password.label }}</label>
+            {{ form.password(class="form-control", placeholder="Enter your password") }}
         </div>
-        <button type="submit" class="btn btn-primary w-100">Login</button>
+        {{ form.submit(class="btn btn-primary w-100") }}
     </form>
 </div>
 {% endblock %}
