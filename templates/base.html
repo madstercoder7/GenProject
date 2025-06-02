@@ -55,19 +55,22 @@
         </div>
     </nav>
 
-    {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-        <div class="flash_messages">
-            {% for category, message in messages %}
-                <div class="alert alert-{{ 'danger' if category == 'danger' else 'warning' if category == 'warning' else 'info' if category == 'info' else 'success' }} alert-dismissible fade show" role="alert">
-                    <i class="fas fa-{{ 'exclamation-triangle' if category == 'danger' or category == 'warning' else 'info-circle' if category == 'info' else 'check-circle' }} me-2"></i>
-                    {{ message }}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                </div>
-            {% endfor %}
-        </div>
-        {% endif %}
-    {% endwith %}
+    <div class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index: 1055;">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="toast align-items-center text-bg-{{ category if category != 'message' else 'primary' }} border-0 show" role="alert" aria-live="assertive" aria-atomic="true">
+                        <div class="d-flex">
+                            <div class="toast-body">
+                                {{ message }}
+                            </div>
+                            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                        </div>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+    </div>
 
     <div class="{% block main_class %}{% endblock %}">
         {% block content %}{% endblock %}
