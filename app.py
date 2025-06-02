@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, flash, session
+from flask import Flask, render_template, request, redirect, url_for, flash, session, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, SubmitField, TextAreaField
@@ -11,6 +11,9 @@ import secrets
 import markdown
 from markupsafe import Markup
 import bleach
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
+from flask_limiter.errors import RateLimitExceeded
 
 app = Flask(__name__)
 
@@ -19,6 +22,9 @@ basedir = os.path.abspath(os.path.dirname(__file__))
 app.config['SQLALCHEMY_DATABASE_URI'] = f"sqlite:///{os.path.join(basedir, 'genproj.db')}"
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SECRET_KEY'] = os.getenv("SECRET_KEY", secrets.token_hex(16))
+app.config['SESSION_COOKIE_SECURE'] = True
+app.config['SESSION_COOKIE_HTTPONLY'] = True
+app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
 
 if not app.config['SECRET_KEY']:
     raise ValueError("No SECRET_KEY set for Flask application")
@@ -71,12 +77,22 @@ class ProjectIdea(db.Model):
 with app.app_context():
     db.create_all()
 
+limiter = Limiter(get_remote_address, app=app, default_limits=["200 per day", "50 per hour"])
+
+@app.errorhandler(RateLimitExceeded)
+def ratelimit_handler(e):
+    return jsonify({
+        "error": "Too many requests. Please slow down",
+        "message": str(e.description)
+    }), 429
+
 # Routes
 @app.route('/')
 def index():
     return render_template("index.html")
 
 @app.route('/register', methods=['GET', 'POST'])
+@Limiter.limit("10 per minute")
 def register():
     if session.get('user_id'):
         return redirect(url_for('index'))
@@ -111,6 +127,7 @@ def register():
     return render_template("register.html", form=form)
 
 @app.route('/login', methods=['GET', 'POST'])
+@Limiter.limit("10 per minute")
 def login():
     if session.get('user_id'):
         return redirect(url_for('index'))
@@ -145,6 +162,7 @@ def logout():
 
 @app.route('/generate', methods=['GET', 'POST'])
 @login_required
+@Limiter.limit("20 per minute")
 def generate():
     form = GenerateForm()
     edit_form = EditForm()
