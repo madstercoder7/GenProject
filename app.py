@@ -92,7 +92,7 @@ def index():
     return render_template("index.html")
 
 @app.route('/register', methods=['GET', 'POST'])
-@Limiter.limit("10 per minute")
+@limiter.limit("10 per minute")
 def register():
     if session.get('user_id'):
         return redirect(url_for('index'))
@@ -127,7 +127,7 @@ def register():
     return render_template("register.html", form=form)
 
 @app.route('/login', methods=['GET', 'POST'])
-@Limiter.limit("10 per minute")
+@limiter.limit("10 per minute")
 def login():
     if session.get('user_id'):
         return redirect(url_for('index'))
@@ -162,7 +162,7 @@ def logout():
 
 @app.route('/generate', methods=['GET', 'POST'])
 @login_required
-@Limiter.limit("20 per minute")
+@limiter.limit("20 per minute")
 def generate():
     form = GenerateForm()
     edit_form = EditForm()

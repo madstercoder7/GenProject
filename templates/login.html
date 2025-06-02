@@ -7,14 +7,14 @@
             {{ form.hidden_tag() }}
             <div class="form-group">
                 {{ form.username.label(class="form-label") }}
-                {{ form.username(class="form-control", placeholder="Username") }}
+                {{ form.username(class="form-control") }}
                 {% for error in form.username.errors %}
                     <span class="error">{{ error }}</span>
                 {% endfor %}
             </div>
             <div class="form-group">
                 {{ form.password.label(class="form-label") }}
-                {{ form.password(class="form-control", placeholder="Password") }}
+                {{ form.password(class="form-control") }}
                 {% for error in form.password.errors %}
                     <span class="error">{{ error }}</span>
                 {% endfor %}
