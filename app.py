@@ -1,8 +1,7 @@
-from flask import Flask, render_template, url_for, redirect, request, session, flash
+from flask import Flask, render_template, request, redirect, url_for, flash, session
 from flask_sqlalchemy import SQLAlchemy
-from flask_migrate import Migrate
 from flask_wtf import FlaskForm
-from wtforms import StringField, PasswordField, SubmitField
+from wtforms import StringField, PasswordField, SubmitField, TextAreaField
 from wtforms.validators import DataRequired, Length
 from werkzeug.security import generate_password_hash, check_password_hash
 from utils import generate_project_idea, login_required, validate_input
@@ -25,14 +24,13 @@ if not app.config['SECRET_KEY']:
     raise ValueError("No SECRET_KEY set for Flask application")
 
 db = SQLAlchemy(app)
-migrate = Migrate(app, db)  # Initialize Flask-Migrate
 
 # Forms
 class RegisterForm(FlaskForm):
     name = StringField('Full Name', validators=[DataRequired(), Length(min=1, max=100)])
     username = StringField('Username', validators=[DataRequired(), Length(min=3, max=50)])
     password = PasswordField('Password', validators=[DataRequired(), Length(min=6)])
-    submit = SubmitField('Submit')
+    submit = SubmitField('Register')
 
 class LoginForm(FlaskForm):
     username = StringField('Username', validators=[DataRequired()])
@@ -43,13 +41,18 @@ class GenerateForm(FlaskForm):
     topic = StringField('Topic', validators=[DataRequired(), Length(max=200)])
     submit = SubmitField('Generate')
 
+class EditForm(FlaskForm):
+    topic = StringField('Topic', validators=[DataRequired(), Length(max=200)])
+    content = TextAreaField('Content', validators=[DataRequired()])
+    submit = SubmitField('Save Changes')
+
 # Models
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)
     username = db.Column(db.String(50), nullable=False, unique=True)
     password = db.Column(db.String(200), nullable=False)
-    created_at = db.Column(db.DateTime, default=datetime.now)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
     project_ideas = db.relationship('ProjectIdea', backref='user', lazy=True, cascade='all, delete-orphan')
 
     def __repr__(self):
@@ -60,10 +63,13 @@ class ProjectIdea(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     topic = db.Column(db.String(100), nullable=False)
     content = db.Column(db.Text, nullable=False)
-    timestamp = db.Column(db.DateTime, default=datetime.now)
+    timestamp = db.Column(db.DateTime, default=datetime.utcnow)
 
     def __repr__(self):
         return f"Project Idea: {self.topic}"
+
+with app.app_context():
+    db.create_all()
 
 # Routes
 @app.route('/')
@@ -72,6 +78,8 @@ def index():
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
+    if session.get('user_id'):
+        return redirect(url_for('index'))
     form = RegisterForm()
     if form.validate_on_submit():
         name = bleach.clean(form.name.data.strip(), tags=['p', 'strong', 'em'], strip=True)
@@ -104,6 +112,8 @@ def register():
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
+    if session.get('user_id'):
+        return redirect(url_for('index'))
     form = LoginForm()
     if form.validate_on_submit():
         username = bleach.clean(form.username.data.strip(), tags=['p', 'strong', 'em'], strip=True)
@@ -137,8 +147,11 @@ def logout():
 @login_required
 def generate():
     form = GenerateForm()
+    edit_form = EditForm()
     idea = None
     topic = None
+    active_idea = None
+    editing = False
     if form.validate_on_submit():
         topic = bleach.clean(form.topic.data.strip(), tags=['p', 'strong', 'em'], strip=True)
         try:
@@ -148,6 +161,7 @@ def generate():
                 new_idea = ProjectIdea(user_id=session["user_id"], topic=topic, content=idea)
                 db.session.add(new_idea)
                 db.session.commit()
+                return redirect(url_for('view_idea', idea_id=new_idea.id))
             else:
                 flash("Failed to generate project idea", "danger")
                 idea = None
@@ -157,7 +171,44 @@ def generate():
 
     history = ProjectIdea.query.filter_by(user_id=session["user_id"]).order_by(ProjectIdea.timestamp.desc()).all()
     rendered_idea = Markup(markdown.markdown(idea)) if idea else None
-    return render_template("generate.html", form=form, idea=rendered_idea, topic=topic, history=history)
+    return render_template("generate.html", form=form, edit_form=edit_form, idea=rendered_idea, topic=topic, history=history, active_idea=active_idea, editing=editing)
+
+@app.route('/view/<int:idea_id>')
+@login_required
+def view_idea(idea_id):
+    idea = ProjectIdea.query.get_or_404(idea_id)
+    if idea.user_id != session["user_id"]:
+        flash("You do not have permission to view this idea.", "danger")
+        return redirect(url_for("generate"))
+    form = GenerateForm()
+    edit_form = EditForm()
+    history = ProjectIdea.query.filter_by(user_id=session["user_id"]).order_by(ProjectIdea.timestamp.desc()).all()
+    rendered_idea = Markup(markdown.markdown(idea.content))
+    return render_template("generate.html", form=form, edit_form=edit_form, idea=rendered_idea, topic=idea.topic, history=history, active_idea=idea, editing=False)
+
+@app.route('/edit/<int:idea_id>', methods=['GET', 'POST'])
+@login_required
+def edit_idea(idea_id):
+    idea = ProjectIdea.query.get_or_404(idea_id)
+    if idea.user_id != session["user_id"]:
+        flash("You do not have permission to edit this idea.", "danger")
+        return redirect(url_for("generate"))
+    form = GenerateForm()
+    edit_form = EditForm()
+    history = ProjectIdea.query.filter_by(user_id=session["user_id"]).order_by(ProjectIdea.timestamp.desc()).all()
+    
+    if edit_form.validate_on_submit():
+        idea.topic = bleach.clean(edit_form.topic.data.strip(), tags=['p', 'strong', 'em'], strip=True)
+        idea.content = bleach.clean(edit_form.content.data.strip(), tags=['p', 'strong', 'em'], strip=True)
+        db.session.commit()
+        flash("Idea updated successfully!", "success")
+        return redirect(url_for('view_idea', idea_id=idea.id))
+    
+    if request.method == 'GET':
+        edit_form.topic.data = idea.topic
+        edit_form.content.data = idea.content
+    
+    return render_template("generate.html", form=form, edit_form=edit_form, idea=None, topic=None, history=history, active_idea=idea, editing=True)
 
 @app.route('/delete_idea/<int:idea_id>', methods=['POST'])
 @login_required

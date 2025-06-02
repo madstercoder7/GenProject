@@ -69,11 +69,11 @@
         {% endif %}
     {% endwith %}
 
-    <main class="main-content">
+    <div class="{% block main_class %}{% endblock %}">
         {% block content %}{% endblock %}
-    </main>
+    </div>
 
-    <footer class="footer text-center py-4 mt-5">
+    <footer class="footer text-center">
         <div class="container">
             <p class="mb-0">© 2025 GenProject. All rights reserved.</p>
         </div>
