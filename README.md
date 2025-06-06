@@ -35,26 +35,34 @@ GenProject is a Flask-based web app that uses AI to generate personalized projec
 ```bash
 git clone https://github.com/yourusername/genproject.git
 cd genproject
-
+```
 ### 2. Setup Virtual Environment
+```bash
 python -m venv venv
 # Activate:
 # On Windows
 venv\Scripts\activate
 # On macOS/Linux
 source venv/bin/activate
+```
 
 ### 3. Install Python dependencies
+```bash
 pip install -r requirements.txt
+```
 
 ### 4. Configure environment variables
+```bash
 GROQ_API_KEY=your_groq_api_key
 DATABASE_URL=postgresql://your_supabase_url
 REDIS_URL=redis://your_upstash_redis_url
 SECRET_KEY=your_flask_secret_key
+```
 
 ## Run the Flask App
+```bash
 flask run
+```
 
 # Contributing 
 Pull requests are welcome! For major changes, please open an issue first to discuss what you would like to change
