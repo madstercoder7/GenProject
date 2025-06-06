@@ -14,14 +14,16 @@ import bleach
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from flask_limiter.errors import RateLimitExceeded
+from flask_migrate import Migrate
+from sqlalchemy import text
+from sqlalchemy.exc import OperationalError
 
 app = Flask(__name__)
 
 # Configuration
-basedir = os.path.abspath(os.path.dirname(__file__))
-app.config['SQLALCHEMY_DATABASE_URI'] = f"sqlite:///{os.path.join(basedir, 'genproj.db')}"
+app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv("DATABASE_URL")
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.config['SECRET_KEY'] = os.getenv("SECRET_KEY", secrets.token_hex(16))
+app.config['SECRET_KEY'] = os.getenv("SECRET_KEY")
 app.config['SESSION_COOKIE_SECURE'] = True
 app.config['SESSION_COOKIE_HTTPONLY'] = True
 app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
@@ -30,6 +32,17 @@ if not app.config['SECRET_KEY']:
     raise ValueError("No SECRET_KEY set for Flask application")
 
 db = SQLAlchemy(app)
+migrate = Migrate(app, db)
+
+@app.before_request
+def warm_db():
+    if request.endpoint in ('static', None) or request.path == '/favicon.ico':
+        return
+    
+    try:
+        db.session.execute(text("SELECT 1"))
+    except OperationalError:
+        app.logger.warning("Database is waking up or unreachable")
 
 # Forms
 class RegisterForm(FlaskForm):
@@ -77,7 +90,9 @@ class ProjectIdea(db.Model):
 with app.app_context():
     db.create_all()
 
-limiter = Limiter(get_remote_address, app=app, default_limits=["200 per day", "50 per hour"])
+REDIS_URL = os.getenv("REDIS_URL")
+limiter = Limiter(get_remote_address, app=app, default_limits=["200 per day", "50 per hour"], storage_uri=REDIS_URL)
+limiter.init_app(app)
 
 @app.errorhandler(RateLimitExceeded)
 def ratelimit_handler(e):
@@ -104,8 +119,13 @@ def register():
 
         # Additional validation
         errors = validate_input({'name': name, 'username': username, 'password': password}, ['name', 'username', 'password'])
-        if User.query.filter_by(username=username).first():
-            errors.append("Username already taken")
+
+        try:
+            if User.query.filter_by(username=username).first():
+                errors.append("Username already taken")
+        except OperationalError:
+            flash("Our database just woke up. Please try again.", "warning")
+            return redirect(url_for('login'))
 
         if errors:
             for error in errors:
@@ -141,16 +161,20 @@ def login():
             for error in errors:
                 flash(error, "danger")
             return render_template("login.html", form=form)
-
-        user = User.query.filter_by(username=username).first()
-        if user and check_password_hash(user.password, password):
-            session["user_id"] = user.id
-            session["username"] = user.username
-            flash(f"Welcome back, {user.name}", "success")
-            return redirect(url_for("generate"))
-        else:
-            flash("Invalid username or password", "danger")
-            return render_template("login.html", form=form)
+        
+        try:
+            user = User.query.filter_by(username=username).first()
+            if user and check_password_hash(user.password, password):
+                session["user_id"] = user.id
+                session["username"] = user.username
+                flash(f"Welcome back, {user.name}", "success")
+                return redirect(url_for("generate"))
+            else:
+                flash("Invalid username or password", "danger")
+                return render_template("login.html", form=form)
+        except OperationalError:
+            flash("Our database just woke up. Please try again.", "warning")
+            return redirect(url_for('login'))
     
     return render_template("login.html", form=form)
 
@@ -243,6 +267,14 @@ def delete_idea(idea_id):
         db.session.rollback()
         flash("Error deleting project idea", "danger")
     return redirect(url_for("generate"))
+
+@app.route('/health')
+def health():
+    try:
+        db.session.execute("SELECT 1")
+        return "OK", 200
+    except:
+        return "Database unreachable", 500
 
 if __name__ == "__main__":
     app.run(debug=True)
