@@ -5,7 +5,7 @@ from wtforms import StringField, PasswordField, SubmitField, TextAreaField
 from wtforms.validators import DataRequired, Length
 from werkzeug.security import generate_password_hash, check_password_hash
 from utils import generate_project_idea, login_required, validate_input
-from datetime import datetime
+from datetime import datetime, timedelta
 import os
 import secrets
 import markdown
@@ -21,6 +21,7 @@ from sqlalchemy.exc import OperationalError
 app = Flask(__name__)
 
 # Configuration
+app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(minutes=5)
 app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv("DATABASE_URL")
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SECRET_KEY'] = os.getenv("SECRET_KEY")
@@ -149,6 +150,7 @@ def register():
 @app.route('/login', methods=['GET', 'POST'])
 @limiter.limit("10 per minute")
 def login():
+    session.permanent = True
     if session.get('user_id'):
         return redirect(url_for('index'))
     form = LoginForm()
@@ -179,6 +181,7 @@ def login():
     return render_template("login.html", form=form)
 
 @app.route('/logout')
+@login_required
 def logout():
     session.clear()
     flash("Logged out successfully.", "info")

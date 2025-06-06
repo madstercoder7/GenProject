@@ -32,3 +32,17 @@ document.addEventListener('DOMContentLoaded', function () {
         new bootstrap.Toast(toastEl, { delay: 4000 }).show();
     });
 });
+
+let timer;
+function resetTimer() {
+    clearTimeout(timer);
+    timer = setTimeout(() => {
+        window.location.href = "/logout";
+    }, 600000);
+}
+
+['mousemove', 'keypress', 'click'].forEach(evt =>
+    document.addEventListener(evt, resetTimer)
+);
+
+resetTimer();
