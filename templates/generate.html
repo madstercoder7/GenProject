@@ -80,7 +80,7 @@
 
 <!-- Fixed Input Form -->
 <div class="input-container">
-    <form method="POST" class="generate-form">
+    <form method="POST" class="generate-form" action="{{ url_for('generate') }}">
         {{ form.hidden_tag() }}
         <div class="input-group">
             {{ form.topic(class="form-control topic-input", placeholder="Enter a topic...") }}
