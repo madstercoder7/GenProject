@@ -17,6 +17,8 @@ from flask_limiter.errors import RateLimitExceeded
 from flask_migrate import Migrate
 from sqlalchemy import text
 from sqlalchemy.exc import OperationalError
+from flask_socketio import SocketIO, emit, disconnect
+import uuid
 
 app = Flask(__name__)
 
@@ -34,6 +36,8 @@ if not app.config['SECRET_KEY']:
 
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)
+socketio = SocketIO(app, cors_allowed_origins="*", manage_session=False)
+chat_sessions = {}
 
 @app.before_request
 def warm_db():
@@ -83,10 +87,26 @@ class ProjectIdea(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     topic = db.Column(db.String(100), nullable=False)
     content = db.Column(db.Text, nullable=False)
-    timestamp = db.Column(db.DateTime, default=datetime.utcnow)
+    timestamp = db.Column(db.DateTime, default=datetime.now)
 
     def __repr__(self):
         return f"Project Idea: {self.topic}"
+    
+# Chat sessions
+class ChatSession(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    session_id = db.Column(db.String(36), nullable=False, unique=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.now)
+    updated_at = db.Column(db.DateTime, default=datetime.now, onupdate=datetime.now)
+    messages = db.relationship('ChatMessage', backref='chat_session', lazy=True, cascade='all, delete-orphan')
+
+class ChatMessage(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    session_id = db.Column(db.String(36), db.ForeignKey('chat_session.session_id'), nullable=False)
+    message_type = db.Column(db.String(10), nullable=False)
+    content = db.Column(db.Text, nullable=False)
+    timestamp = db.Column(db.DateTime, default=datetime.now)
 
 with app.app_context():
     db.create_all()
@@ -101,6 +121,190 @@ def ratelimit_handler(e):
         "error": "Too many requests. Please slow down",
         "message": str(e.description)
     }), 429
+
+def get_current_user():
+    user_id = session.get('user_id')
+    if user_id:
+        try:
+            return User.query.get(user_id)
+        except:
+            return None
+    return None
+
+@socketio.on("connect")
+def handle_connect():
+    user = get_current_user()
+    if not user:
+        disconnect()
+        return False
+    
+    print(f"User {user.username} connected")
+    emit("connected", {
+        "message": f"Welcome back, {user.name}!👋",
+        "timestamp": datetime.now().isoformat()
+    })
+
+@socketio.on("disconnect")
+def handle_disconnect():
+    user = get_current_user()
+    if user:
+        print(f"User {user.username} disconnected")
+
+@socketio.on("join_chat")
+def handle_join_chat(data):
+    user = get_current_user()
+    if not user:
+        emit("error", {"message": "Authentication required"})
+        return
+    
+    session_id = data.get("session_id")
+    if not session_id:
+        session_id = str(uuid.uuid4())
+
+    chat_session = ChatSession.query.filter_by(session_id=session_id, user_id=user.id).first()
+    if not chat_session:
+        chat_session = ChatSession(session_id=session_id, user_id=user.id)
+        db.session.add(chat_session)
+        db.session.commit()
+
+    messages = ChatMessage.query.filter_by(session_id=session_id).order_by(ChatMessage.timestamp.asc()).all()
+    history = []
+    for msg in messages:
+        history.append({
+            "type": msg.message_type,
+            "content": msg.content,
+            "timestamp": msg.timestamp.isoformat()
+        })
+
+    emit("chat_history", {
+        "session_id": session_id,
+        "messages": history
+    })
+
+@socketio.om("user_message")
+def handle_user_message(data):
+    user = get_current_user()
+    if not user:
+        emit("error", {"message": "Authentication required"})
+        return
+    
+    session_id = data.get("session_id")
+    user_message = data.get("message", "").strip()
+
+    if not user_message or not session_id:
+        emit("error", {"message": "Message and session ID required"})
+        return
+    
+    if len(user_message) > 500:
+        emit("error", {"message": "Message too long (max 500 characters)"})
+        return
+    
+    clean_message = bleach.clean(user_message, tags=[], strip=True)
+
+    try:
+        user_msg = ChatMessage(
+            session_id=session_id,
+            message_type="use",
+            content=clean_message
+        )
+        db.session.add(user_msg)
+
+        emit("message_confirmed", {
+            "type": "user",
+            "content": clean_message,
+            "timestamp": datetime.now().isoformat()
+        })
+
+        emit("bot_typing", {"typing": True})
+
+        prompt = f"Give me a coding project idea about {clean_message}."
+        bot_response = generate_project_idea(prompt)
+
+        if not bot_response or bot_response.startswith("Error"):
+            bot_response = "I'm having trouble generating a project idea right now. Could you try rephrasing your request or try a different topic?"
+
+        bot_msg = ChatMessage(
+            session_id=session_id,
+            message_type="bot",
+            content=bot_response
+        )
+        db.session.add(bot_msg)
+
+        project_idea = ProjectIdea(
+            user_id=user.id,
+            topic=clean_message,
+            content=bot_response
+        )
+        db.session.add(project_idea)
+        db.session.commit()
+
+        emit("bot_response", {
+            "type": "bot",
+            "content": bot_response,
+            "timestamp": datetime.now().isoformat(),
+            "project_id": project_idea.id
+        })
+
+    except Exception as e:
+        db.session.rollback()
+        print(f"Error processing message: {str(e)}")
+        emit("bot_response", {
+            "type": "bot",
+            "content": "I'm experiencing some technical difficulties. Please try again in a moment.",
+            "timestamp": datetime.now().isoformat(),
+            "error": True
+        })
+    finally:
+        emit("bot_typing", {"typing": False})
+
+@socketio.on("regenerate_response")
+def handle_regenerate(data):
+    user = get_current_user()
+    if not user:
+        emit("error", {"message": "Authentication required"})
+        return
+    
+    session_id = data.get("session_id")
+    original_topic = data.get("topic", "")
+
+    if not session_id or not original_topic:
+        emit("error", {"message": "Session and topic required"})
+        return
+    
+    try:
+        emit("bot_typing", {"typing": True})
+
+        prompt = f"Give me a different coding project idea about {original_topic}."
+        bot_response = generate_project_idea(prompt)
+
+        if not bot_response or bot_response.startswith("Error"):
+            bot_response = "I'm having trouble generating alternative ideas. Please try a different topic"
+        
+        bot_msg = ChatMessage(
+            session_id=session_id,
+            message_type="bot",
+            content=bot_response
+        )
+        db.session.add(bot_msg)
+        db.session.commit()
+
+        emit("bot_response", {
+            "type": "bot",
+            "content": bot_response,
+            "timestamp": datetime.now().isoformat(),
+            "regenerated": True
+        })
+
+    except Exception as e:
+        print(f"Error regenerating response: {str(e)}")
+        emit("bot_response", {
+            "type": "bot",
+            "content": "I couldnt generate an alternative idea. Please try again",
+            "timestamp": datetime.now().isoformat(),
+            "error": True
+        })
+    finally:
+        emit("bot_tying", {"typing": False})
 
 # Routes
 @app.route('/')
@@ -187,36 +391,21 @@ def logout():
     flash("Logged out successfully.", "info")
     return redirect(url_for("index"))
 
+@app.route("/chat")
+@login_required
+def chat():
+    user = get_current_user()
+    session_id = str(uuid.uuid4())
+
+    recent_projects = ProjectIdea.query.filter_by(user_id=user.id).order_by(ProjectIdea.timestamp.desc()).limit(10).all()
+
+    return render_template("chat.html", session_id=session_id, user=user, recent_projects=recent_projects)
+
 @app.route('/generate', methods=['GET', 'POST'])
 @login_required
 @limiter.limit("20 per minute")
 def generate():
-    form = GenerateForm()
-    edit_form = EditForm()
-    idea = None
-    topic = None
-    active_idea = None
-    editing = False
-    if form.validate_on_submit():
-        topic = bleach.clean(form.topic.data.strip(), tags=['p', 'strong', 'em'], strip=True)
-        try:
-            prompt = f"Give me a coding project idea about {topic}."
-            idea = generate_project_idea(prompt)
-            if idea and not idea.startswith("Error"):
-                new_idea = ProjectIdea(user_id=session["user_id"], topic=topic, content=idea)
-                db.session.add(new_idea)
-                db.session.commit()
-                return redirect(url_for('view_idea', idea_id=new_idea.id))
-            else:
-                flash("Failed to generate project idea", "danger")
-                idea = None
-        except Exception as e:
-            flash("Error occurred while generating project idea", "danger")
-            idea = None
-
-    history = ProjectIdea.query.filter_by(user_id=session["user_id"]).order_by(ProjectIdea.timestamp.desc()).all()
-    rendered_idea = Markup(markdown.markdown(idea)) if idea else None
-    return render_template("generate.html", form=form, edit_form=edit_form, idea=rendered_idea, topic=topic, history=history, active_idea=active_idea, editing=editing)
+    return redirect(url_for("chat"))
 
 @app.route('/view/<int:idea_id>')
 @login_required
@@ -271,6 +460,24 @@ def delete_idea(idea_id):
         flash("Error deleting project idea", "danger")
     return redirect(url_for("generate"))
 
+@app.route("/history")
+@login_required
+def history():
+    user_id = session.get("user_id")
+    projects = ProjectIdea.query.filter_by(user_id=user_id).order_by(ProjectIdea.timestamp.desc()).all()
+
+    history_data = []
+    for project in projects:
+        history_data.append({
+            "id": project.id,
+            "topic": project.topic,
+            "content": project.content[:200] + "..." if len(project.content) > 200 else project.content,
+            "timestamp": project.timestamp.strftime("%Y-%m-%d %H:%M")
+        })
+
+    return jsonify(history_data)
+
+
 @app.route('/health')
 def health():
     try:
@@ -280,4 +487,4 @@ def health():
         return "Database unreachable", 500
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    socketio.run(app, debug=True, host="0.0.0.0", port=int(os.environ.get("PORT", 5000)))

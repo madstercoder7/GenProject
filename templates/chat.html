@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+{% block title %}Chat - GenProject{% endblock %}
+{% block main_class %}chat-page{% endblock %}
+
+{% block content %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.2/socket.io.js"></script>
+
+<div class="chat-container">
+    <div class="sidebar" id="chatSidebar">
+        <div class="sidebar-header">
+            <h4><i class="fas fa-lightbulb"></i>GenProject</h4>
+            <div class="user-info">{{ user.name }} (@{{user.username }})</div>
+            <div class="connection-status status-connecting" id="connectionStatus">
+                <i class="fas fa-circle"></i> Connecting...
+            </div>
+        </div>
+
+        <div class="recent-projects">
+            <h6><i class="fas fa-history"></i> Recent Projects</h6>
+            {% if recent_projects %}
+                {% for project in recent_projects %}
+                    <div class="project-item" onclick="loadProject('{{ project.topic }}', {{ project.id }})">
+                        <div class="topic">{{ project.topic }}</div>
+                        <div class="preview">{{ project.content[:100] }} ... </div>
+                        <div class="timetsamp">{{ project.timestamp.strftime("%b %d, %Y at %I:%M %p") }}</div>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <div class="text-muted">No project yet. Start chatting to create your first project idea!</div>
+            {% endif %}
+
+            <div class="mt-3">
+                <a href="{{ url_for('generate') }}" class="btn btn-outline-primary btn-sm me-2">
+                    <i class="fas fa-list"></i> Classic View
+                </a>
+                <a href="{{ url_for('logout') }}" class="btn btn-outline-danger btn-sm">
+                    <i class="fas fa-sign-out-alt"></i> Logout
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="chat-main">
+        <div class="chat-header">
+            <h3><i class="fas fa-comments"></i> Project Idea Generator</h3>
+            <button class="btn btn-outline-secondary btn-sm sidebar-toggle d-md-none" onclick="toggleSidebar()">
+                <i class="fas fa-bars"></i>
+            </button>
+        </div>   
+
+        <div class="chat-messages" id="chatMessages">
+            <div class="message bot-message">
+                <div class="message-bubble welcome-message">
+                    <div><strong>Welcome to GenProject</strong></div>
+                    <p>I'm your AI project idea generator. Tell me what technologies, topics, or types of projects you're interested in and I'll help you brainstorm exciting coding projects</p>
+                    <div class="suggestions">
+                        <button class="suggestion-btn" onclick="sendSuggestion('Web development with React and Node.js')">
+                            <i class="fab fa-react"></i> Web Development
+                        </button>
+                        <button class="suggestion-btn" onclick="sendSuggestion('Machine Learning project with Python')">
+                            <i class="fas fa-brain"></i> Machine Learning
+                        </button>
+                        <button class="suggestion-btn" onclick="sendSuggestion('Mobile App Development')">
+                            <i class="fas fa-mobile-alt"></i> Mobile App
+                        </button>
+                        <button class="suggestion-btn" onclick="sendSuggestion('Data Visualization project')">
+                            <i class="fas fa-chart-bar"></i> Data Visualization
+                        </button>
+                        <button class="suggestion-btn" onclick="sendSuggestion('API Development with Flask')">
+                            <i class="fas fa-server"></i> API Development
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="typing-indicator" id="typingIndicator">
+            <div class="typing-dots">
+                <span></span><span></span><span></span>
+            </div>
+            <span>GenProject is thinking... </span>
+        </div>
+
+        <div class="chat-input-container">
+            <div class="input-wrapper">
+                <textarea id="messageInput" placeholder="Describe the type of project you'd like to build..." maxlength="500" rows="1"></textarea>
+                <button id="sendButton" onclick="sendMessage()">
+                    <i class="fas fa-paper-plane"></i>
+                </button>
+            </div>
+            <div class="input-footer">
+                <span class="char-count">0/500</span>
+                <span class="hint">Press Enter to send, Shift+Enter for new line</span>
+            </div>
+        </div>
+    </div>    
+</div>
+{% endblock %}
