@@ -181,7 +181,7 @@ def handle_join_chat(data):
         "messages": history
     })
 
-@socketio.om("user_message")
+@socketio.on("user_message")
 def handle_user_message(data):
     user = get_current_user()
     if not user:

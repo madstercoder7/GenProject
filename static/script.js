@@ -124,6 +124,22 @@ function sendMessage() {
     }
 }
 
+function sendSuggestion(suggestion) {
+    messageInput.value = suggestion;
+    sendMessage();
+}
+
+function formatMessage(content) {
+    return content
+        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+        .replace(/\*(.*?)\*/g, '<em>$1</em>')
+        .replace(/```([\s\S]*?)```/g, '<pre class="code-block"><code>$1</code></pre>')
+        .replace(/`(.*?)`/g, '<code class="inline-code">$1</code>')
+        .replace(/\n\n/g, '</p><p>')
+        .replace(/\n/g, '<br>')
+        .replace(/^(.*)$/, '<p>$1</p>');
+}
+
 function updateConnectionStatus(status, text) {
     connectionStatus.className = `connection-status status-${status}`;
     connectionStatus.innerHTML = `<i class="fas fa-circle"></i> ${text}`;
@@ -163,4 +179,126 @@ function addMessage(type, content, isError = false, timestamp = null, isRegenera
     scorllToBottom();
 }
 
-func
+function escapeHtml(text) {
+    const div = document.createElement("div");
+    div.textContent = text;
+    return div.innerHTML.replace(/"/g, '&quot;').replace(/'/g, '&#39;').replace(/`/g, '\\`');
+}
+
+function regenerateResponse(originalContent) {
+    const userMessages = document.querySelectorAll('.user-message');
+    if (userMessages.length > 0) {
+        const lastUserMessage = userMessages[userMessages.length - 1];
+        const topic = lastUserMessage.querySelector('.message-bubble').textContent.trim();
+
+        socket.emit("regenerate_response", {
+            sessionId: sessionId,
+            topic: topic
+        });
+    }
+}
+
+function copyToClipboard(text) {
+    navigator.clipboard.writeText(text).then(() => {
+        showToast("Copied to clipboard!", "success");
+    }).catch(() => {
+        const textArea = document.createElement("textarea");
+        textArea.value = text;
+        document.body.appendChild(textArea);
+        textArea.select();
+        document.execCommand("copy");
+        document.body.removeChild(textArea);
+        showToast("Copies to clipborad", "success");
+    });
+}
+
+function showToast(message, type = 'info') {
+    const toastContainer = document.querySelector('.toast-container');
+    const toast = document.createElement('div');
+    toast.className = `toast align-items-center text-bg-${type} border-0 show`;
+    toast.setAttribute('role', 'alert');
+    toast.innerHTML = `
+        <div class="d-flex">
+            <div class="toast-body">${message}</div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+        </div>
+    `;
+    toastContainer.appendChild(toast);
+    
+    setTimeout(() => {
+        if (toast.parentNode) {
+            toast.parentNode.removeChild(toast);
+        }
+    }, 3000);
+}
+
+function loadProject(topic, projectId) {
+    messageInput.value = `Tell me more about: ${topic}`;
+    messageInput.focus();
+}
+
+function toggleSidebar() {
+    const sidebar = document.getElementById('chatSidebar');
+    sidebar.classList.toggle('show');
+}
+
+function updateConnectionStatus(status, text) {
+    connectionStatus.className = `connection-status status-${status}`;
+    connectionStatus.innerHTML = `<i class="fas fa-circle"></i> ${text}`;
+}
+
+function showTyping() {
+    typingIndicator.style.display = 'flex';
+    scrollToBottom();
+}
+
+function hideTyping() {
+    typingIndicator.style.display = 'none';
+}
+
+function scrollToBottom() {
+    setTimeout(() => {
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    }, 100);
+}
+
+function updateCharCount() {
+    const count = messageInput.value.length;
+    charCount.textContent = `${count}/500`;
+    charCount.style.color = count > 450 ? '#dc3545' : '#6c757d';
+    
+    sendButton.disabled = count === 0 || count > 500;
+}
+
+function autoResize() {
+    messageInput.style.height = 'auto';
+    messageInput.style.height = Math.min(messageInput.scrollHeight, 120) + 'px';
+}
+
+messageInput.addEventListener('input', () => {
+    updateCharCount();
+    autoResize();
+});
+
+messageInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        sendMessage();
+    }
+});
+
+sendButton.addEventListener('click', sendMessage);
+
+updateCharCount();
+scrollToBottom();
+
+document.addEventListener('click', (e) => {
+    const sidebar = document.getElementById('chatSidebar');
+    const toggleBtn = document.querySelector('.sidebar-toggle');
+    
+    if (sidebar.classList.contains('show') && 
+        !sidebar.contains(e.target) && 
+        !toggleBtn.contains(e.target)) {
+        sidebar.classList.remove('show');
+    }
+});
