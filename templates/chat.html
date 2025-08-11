@@ -1,175 +1,603 @@
 {% extends "base.html" %}
 {% block title %}Chat - GenProject{% endblock %}
-{% block main_class %}chat-page{% endblock %}
+{% block main_class %}container-fluid p-0{% endblock %}
 
 {% block style %}
 <style>
-    :root {
-        --primary-color: #667eea;
-            --secondary-color: #764ba2;
-            --success-color: #28a745;
-            --danger-color: #dc3545;
-            --warning-color: #ffc107;
-            --info-color: #17a2b8;
-            --light-color: #f8f9fa;
-            --dark-color: #343a40;
-    }
+/* Chat Page Styling */
+.chat-page {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+    padding-top: 80px; /* Account for fixed navbar */
+}
 
-    body {
-        background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
-        font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
-        margin: 0;
-        padding: 0;
-        height: 100vh;
-        overflow: hidden;
-    }
+/* Chat Container */
+.chat-container {
+    display: flex;
+    height: calc(100vh - 80px);
+    max-width: 1400px;
+    margin: 0 auto;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px);
+    border-radius: 20px 20px 0 0;
+    box-shadow: 0 -5px 30px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+}
 
+/* Sidebar */
+.sidebar {
+    width: 350px;
+    background: #f8f9fa;
+    border-right: 1px solid #dee2e6;
+    display: flex;
+    flex-direction: column;
+    transition: transform 0.3s ease;
+}
+
+.sidebar.collapsed {
+    transform: translateX(-100%);
+}
+
+.sidebar-header {
+    padding: 25px 20px;
+    background: linear-gradient(135deg, #495057, #6c757d);
+    color: white;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.sidebar-header h4 {
+    margin: 0;
+    font-weight: 700;
+    font-size: 1.2rem;
+}
+
+.sidebar-header .user-info {
+    margin-top: 8px;
+    font-size: 0.85rem;
+    opacity: 0.9;
+}
+
+.sidebar-toggle {
+    position: absolute;
+    top: 25px;
+    right: 20px;
+    background: rgba(255, 255, 255, 0.2);
+    border: none;
+    color: white;
+    border-radius: 8px;
+    width: 35px;
+    height: 35px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.sidebar-toggle:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+.sidebar-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px;
+}
+
+.connection-status {
+    display: flex;
+    align-items: center;
+    background: #e9ecef;
+    padding: 12px 15px;
+    border-radius: 10px;
+    margin-bottom: 20px;
+    font-size: 0.9rem;
+    color: #495057;
+}
+
+.connection-status.connected {
+    background: #d1e7dd;
+    color: #0f5132;
+}
+
+.connection-status.disconnected {
+    background: #f8d7da;
+    color: #842029;
+}
+
+.status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    margin-right: 8px;
+    background-color: #6c757d;
+}
+
+.connection-status.connected .status-dot {
+    background-color: #198754;
+    animation: pulse 2s infinite;
+}
+
+.connection-status.disconnected .status-dot {
+    background-color: #dc3545;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+
+.recent-projects h6 {
+    color: #495057;
+    font-weight: 600;
+    margin-bottom: 15px;
+    padding-bottom: 8px;
+    border-bottom: 2px solid #e9ecef;
+}
+
+.project-item {
+    background: white;
+    border: 1px solid #e9ecef;
+    border-radius: 12px;
+    padding: 15px;
+    margin-bottom: 12px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.project-item:hover {
+    background: #f8f9fa;
+    border-color: #007bff;
+    box-shadow: 0 4px 12px rgba(0, 123, 255, 0.15);
+    transform: translateY(-2px);
+}
+
+.project-item h6 {
+    margin: 0 0 8px 0;
+    color: #212529;
+    font-weight: 600;
+    font-size: 0.95rem;
+    line-height: 1.3;
+}
+
+.project-item .preview {
+    color: #6c757d;
+    font-size: 0.85rem;
+    line-height: 1.4;
+    margin-bottom: 8px;
+}
+
+.project-item .timestamp {
+    color: #adb5bd;
+    font-size: 0.75rem;
+}
+
+/* Chat Main Area */
+.chat-main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    background: white;
+}
+
+.chat-header {
+    padding: 25px 30px;
+    background: linear-gradient(135deg, #007bff, #0056b3);
+    color: white;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 2px 10px rgba(0, 123, 255, 0.2);
+}
+
+.chat-header h4 {
+    margin: 0;
+    font-weight: 700;
+    font-size: 1.3rem;
+}
+
+.chat-header .sidebar-toggle {
+    position: static;
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+}
+
+/* Chat Messages */
+.chat-messages {
+    flex: 1;
+    padding: 30px;
+    overflow-y: auto;
+    background: #f8f9fa;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.message {
+    display: flex;
+    animation: fadeInUp 0.4s ease;
+}
+
+.message.user {
+    justify-content: flex-end;
+}
+
+.message.bot {
+    justify-content: flex-start;
+}
+
+.message-bubble {
+    max-width: 75%;
+    padding: 18px 22px;
+    border-radius: 20px;
+    position: relative;
+    word-wrap: break-word;
+    line-height: 1.5;
+    box-shadow: 0 3px 12px rgba(0, 0, 0, 0.1);
+}
+
+.message.user .message-bubble {
+    background: linear-gradient(135deg, #007bff, #0056b3);
+    color: white;
+    border-bottom-right-radius: 6px;
+}
+
+.message.bot .message-bubble {
+    background: white;
+    color: #212529;
+    border: 1px solid #e9ecef;
+    border-bottom-left-radius: 6px;
+}
+
+.message-time {
+    font-size: 0.75rem;
+    opacity: 0.7;
+    margin-top: 8px;
+    font-style: italic;
+}
+
+.message.user .message-time {
+    text-align: right;
+}
+
+.message.bot .message-time {
+    text-align: left;
+    color: #6c757d;
+}
+
+/* Typing Indicator */
+.typing-indicator {
+    display: flex;
+    align-items: center;
+    padding: 18px 22px;
+    background: white;
+    border: 1px solid #e9ecef;
+    border-radius: 20px;
+    border-bottom-left-radius: 6px;
+    max-width: 75%;
+    margin-left: 0;
+    box-shadow: 0 3px 12px rgba(0, 0, 0, 0.1);
+    animation: fadeInUp 0.3s ease;
+}
+
+.typing-dots {
+    display: flex;
+    gap: 4px;
+    margin-right: 10px;
+}
+
+.typing-dots span {
+    width: 8px;
+    height: 8px;
+    background-color: #007bff;
+    border-radius: 50%;
+    animation: typing 1.4s infinite ease-in-out;
+}
+
+.typing-dots span:nth-child(1) { animation-delay: -0.32s; }
+.typing-dots span:nth-child(2) { animation-delay: -0.16s; }
+.typing-dots span:nth-child(3) { animation-delay: 0; }
+
+@keyframes typing {
+    0%, 80%, 100% {
+        transform: scale(0.8);
+        opacity: 0.5;
+    }
+    40% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+/* Suggestions */
+.suggestions {
+    padding: 20px 30px;
+    background: #f8f9fa;
+    border-top: 1px solid #e9ecef;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.suggestion-btn {
+    background: white;
+    color: #007bff;
+    border: 2px solid #007bff;
+    border-radius: 25px;
+    padding: 10px 18px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.suggestion-btn:hover {
+    background: #007bff;
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3);
+}
+
+/* Chat Input */
+.chat-input {
+    padding: 25px 30px;
+    background: white;
+    border-top: 1px solid #e9ecef;
+}
+
+.input-group {
+    display: flex;
+    gap: 15px;
+    align-items: flex-end;
+}
+
+#messageInput {
+    flex: 1;
+    border: 2px solid #e9ecef;
+    border-radius: 25px;
+    padding: 15px 22px;
+    font-size: 1rem;
+    background: #f8f9fa;
+    resize: none;
+    min-height: 50px;
+    max-height: 120px;
+    transition: all 0.3s ease;
+    font-family: inherit;
+    line-height: 1.4;
+}
+
+#messageInput:focus {
+    outline: none;
+    border-color: #007bff;
+    background: white;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.15);
+}
+
+#messageInput::placeholder {
+    color: #adb5bd;
+}
+
+#sendBtn {
+    background: linear-gradient(135deg, #28a745, #20c997);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 55px;
+    height: 55px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 3px 12px rgba(40, 167, 69, 0.3);
+    font-size: 1.1rem;
+}
+
+#sendBtn:hover:not(:disabled) {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 20px rgba(40, 167, 69, 0.4);
+}
+
+#sendBtn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: 0 3px 12px rgba(40, 167, 69, 0.2);
+}
+
+.input-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 12px;
+    color: #6c757d;
+    font-size: 0.85rem;
+}
+
+#charCount {
+    font-weight: 500;
+}
+
+/* Action Buttons */
+.message-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 12px;
+}
+
+.message.user .message-actions {
+    justify-content: flex-end;
+}
+
+.message.bot .message-actions {
+    justify-content: flex-start;
+}
+
+.btn-action {
+    background: rgba(0, 0, 0, 0.1);
+    border: none;
+    border-radius: 15px;
+    padding: 6px 12px;
+    font-size: 0.75rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    color: inherit;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.message.user .btn-action {
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+}
+
+.message.bot .btn-action {
+    background: #e9ecef;
+    color: #495057;
+}
+
+.btn-action:hover {
+    transform: translateY(-1px);
+}
+
+.message.user .btn-action:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+.message.bot .btn-action:hover {
+    background: #dee2e6;
+}
+
+/* Welcome Message Styling */
+.welcome-message {
+    background: linear-gradient(135deg, #17a2b8, #138496) !important;
+    color: white !important;
+    border: none !important;
+}
+
+.welcome-message strong {
+    font-size: 1.1rem;
+    display: block;
+    margin-bottom: 8px;
+}
+
+/* Animations */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
     .chat-container {
-        display: flex;
-        height: 100vh;
-        max-width: 1400px;
-        margin: 0 auto;
-        background: white;
-        box-shadow: 0 0 50px rgba(0, 0, 0, 0.1);
+        height: calc(100vh - 70px);
+        border-radius: 0;
     }
-
+    
     .sidebar {
+        position: absolute;
+        top: 0;
+        left: 0;
+        height: 100%;
         width: 300px;
-        background: var(--light-color);
-        border-right: 1px solid #e9ecef;
-        display: flex;
-        flex-direction: column;
+        transform: translateX(-100%);
+        z-index: 30;
+        box-shadow: 3px 0 15px rgba(0, 0, 0, 0.2);
     }
-
-    .sidebar-header {
-        padding: 20px;
-        background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
-        color: white;
+    
+    .sidebar.show {
+        transform: translateX(0);
     }
-
-    .sidebar-header h4 {
-        margin: 0 0 5px 0;
-        font-size: 18px;
-    }
-
-    .sidebar-header .user-info {
-        font-size: 14px;
-        opacity: 0.9;
-    }
-
-    .connection-status {
-        padding: 8px 12px;
-        border-radius: 20px;
-        font-size: 12px;
-        font-weight: 500;
-        margin-top: 10px;
-        display: inline-block;
-    }
-
-    .status-connected {
-        background: rgba(40, 167, 69, 0.2);
-        color: var(--success-color);
-    }
-
-    .status-disconnected {
-        background: rgba(220, 53, 69, 0.2);
-        color: var(--danger-color);
-    }
-
-    .status-connecting {
-        background: rgba(255, 193, 7, 0.2) ;
-        color: var(--warning-color);
-    }
-
-    .recent-projects {
-        flex: 1;
-        padding: 20px;
-        overflow-y: auto;
-    }
-
-    .recent-projects h6 {
-        color: var(--dark-color);
-        margin-bottom: 15px;
-        font-weight: 600;
-    }
-
-    .project-item {
-        background: white;
-        border: 1px solid #e9ecef;
-        border-radius: 8px;
-        padding: 12px;
-        margin-bottom: 10px;
-        cursor: pointer;
-        transition: all 0.2s;
-    }
-
-    .project-item:hover {
-        border-color: var(--primary-color);
-        transform: translateY(-1px);
-        box-shadow: 0 2px 8px rgba(102, 126, 234, 0.1);
-    }
-
-    .project-item .topic {
-        font-weight: 600;
-        color: var(--primary-color);
-        font-size: 14px;
-        margin-bottom: 4px;
-    }
-
-    .project-item .preview {
-        font-size: 12px;
-        color: #6c757d;
-        line-height: 1.3;
-        margin-bottom: 4px;
-    }
-
-    .project-item .timestamp {
-        font-size: 11px;
-        color: #abd5bd;
-    }
-
+    
     .chat-main {
-        flex: 1;
-        display: flex;
-        flex-direction: column;
+        width: 100%;
     }
-
+    
+    .message-bubble {
+        max-width: 85%;
+    }
+    
+    .chat-messages {
+        padding: 20px;
+    }
+    
+    .chat-input {
+        padding: 20px;
+    }
+    
     .chat-header {
         padding: 20px;
-        background: white;
-        border-bottom: 1px solid #e9ecef;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
     }
-
-    .chat-header h3 {
-        margin: 0;
-        color: var(--primary-color);
-        font-size: 24px;
+    
+    .suggestions {
+        padding: 15px 20px;
     }
-
-    .chat-messages {
-        flex: 1;
-        padding: 20px;
-        overflow-y: auto;
-        scroll-behavior: smooth;
-        background: #f8f9fa;
+    
+    #sendBtn {
+        width: 50px;
+        height: 50px;
     }
+}
 
-    .message {
-        margin-bottom: 20px;
-        display: flex;
+@media (max-width: 480px) {
+    .sidebar {
+        width: 280px;
     }
-
-    .message.user-message {
-        justify-content: flex-end;
-    }
-
+    
     .message-bubble {
-        max-width: 70%;
+        max-width: 90%;
+        padding: 15px 18px;
     }
+    
+    .chat-messages {
+        padding: 15px;
+        gap: 15px;
+    }
+    
+    .input-group {
+        gap: 10px;
+    }
+    
+    #sendBtn {
+        width: 45px;
+        height: 45px;
+        font-size: 1rem;
+    }
+}
 
+/* Scrollbar Styling */
+.sidebar-content::-webkit-scrollbar,
+.chat-messages::-webkit-scrollbar {
+    width: 6px;
+}
+
+.sidebar-content::-webkit-scrollbar-track,
+.chat-messages::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 3px;
+}
+
+.sidebar-content::-webkit-scrollbar-thumb,
+.chat-messages::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 3px;
+}
+
+.sidebar-content::-webkit-scrollbar-thumb:hover,
+.chat-messages::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
+}
 </style>
 {% endblock %}
 
@@ -177,93 +605,424 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.2/socket.io.js"></script>
 
 <div class="chat-container">
+    <!-- Sidebar -->
     <div class="sidebar" id="chatSidebar">
         <div class="sidebar-header">
-            <h4><i class="fas fa-lightbulb"></i>GenProject</h4>
-            <div class="user-info">{{ user.name }} (@{{user.username }})</div>
-            <div class="connection-status status-connecting" id="connectionStatus">
-                <i class="fas fa-circle"></i> Connecting...
-            </div>
+            <h4><i class="fas fa-lightbulb me-2"></i>GenProject Chat</h4>
+            <div class="user-info">{{ user.name }} (@{{ user.username }})</div>
+            <button class="sidebar-toggle d-md-none" onclick="toggleSidebar()">
+                <i class="fas fa-times"></i>
+            </button>
         </div>
 
-        <div class="recent-projects">
-            <h6><i class="fas fa-history"></i> Recent Projects</h6>
-            {% if recent_projects %}
-                {% for project in recent_projects %}
-                    <div class="project-item" onclick=`loadProject('{{ project.topic }}', {{ project.id }})`>
-                        <div class="topic">{{ project.topic }}</div>
-                        <div class="preview">{{ project.content[:100] }} ... </div>
-                        <div class="timetsamp">{{ project.timestamp.strftime("%b %d, %Y at %I:%M %p") }}</div>
-                    </div>
-                {% endfor %}
-            {% else %}
-                <div class="text-muted">No project yet. Start chatting to create your first project idea!</div>
-            {% endif %}
+        <div class="sidebar-content">
+            <div class="connection-status" id="connectionStatus">
+                <div class="status-dot"></div>
+                <span>Connecting...</span>
+            </div>
 
-            <div class="mt-3">
-                <a href="{{ url_for('generate') }}" class="btn btn-outline-primary btn-sm me-2">
-                    <i class="fas fa-list"></i> Classic View
+            <div class="recent-projects">
+                <h6><i class="fas fa-history me-2"></i>Recent Projects</h6>
+                {% if recent_projects %}
+                    {% for project in recent_projects %}
+                        <div class="project-item" onclick="loadProject('{{ project.topic|e }}', {{ project.id }})">
+                            <h6>{{ project.topic }}</h6>
+                            <div class="preview">{{ project.content[:100] }}{% if project.content|length > 100 %}...{% endif %}</div>
+                            <div class="timestamp">{{ project.timestamp.strftime("%b %d, %Y at %I:%M %p") }}</div>
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="text-muted p-3 text-center" style="background: #e9ecef; border-radius: 10px;">
+                        <i class="fas fa-comments fa-2x mb-2 d-block" style="opacity: 0.5;"></i>
+                        <small>No projects yet. Start chatting to create your first project idea!</small>
+                    </div>
+                {% endif %}
+            </div>
+
+            <div class="mt-4 d-grid gap-2">
+                <a href="{{ url_for('generate') }}" class="btn btn-outline-primary btn-sm">
+                    <i class="fas fa-list me-1"></i> Classic View
                 </a>
                 <a href="{{ url_for('logout') }}" class="btn btn-outline-danger btn-sm">
-                    <i class="fas fa-sign-out-alt"></i> Logout
+                    <i class="fas fa-sign-out-alt me-1"></i> Logout
                 </a>
             </div>
         </div>
     </div>
 
+    <!-- Chat Main Area -->
     <div class="chat-main">
         <div class="chat-header">
-            <h3><i class="fas fa-comments"></i> Project Idea Generator</h3>
-            <button class="btn btn-outline-secondary btn-sm sidebar-toggle d-md-none" onclick="toggleSidebar()">
+            <h4><i class="fas fa-comments me-2"></i>Project Idea Generator</h4>
+            <button class="sidebar-toggle d-md-none" onclick="toggleSidebar()">
                 <i class="fas fa-bars"></i>
             </button>
-        </div>   
+        </div>
 
         <div class="chat-messages" id="chatMessages">
-            <div class="message bot-message">
+            <!-- Welcome message -->
+            <div class="message bot">
                 <div class="message-bubble welcome-message">
-                    <div><strong>Welcome to GenProject</strong></div>
-                    <p>I'm your AI project idea generator. Tell me what technologies, topics, or types of projects you're interested in and I'll help you brainstorm exciting coding projects</p>
-                    <div class="suggestions">
-                        <button class="suggestion-btn" onclick="sendSuggestion('Web development with React and Node.js')">
-                            <i class="fab fa-react"></i> Web Development
-                        </button>
-                        <button class="suggestion-btn" onclick="sendSuggestion('Machine Learning project with Python')">
-                            <i class="fas fa-brain"></i> Machine Learning
-                        </button>
-                        <button class="suggestion-btn" onclick="sendSuggestion('Mobile App Development')">
-                            <i class="fas fa-mobile-alt"></i> Mobile App
-                        </button>
-                        <button class="suggestion-btn" onclick="sendSuggestion('Data Visualization project')">
-                            <i class="fas fa-chart-bar"></i> Data Visualization
-                        </button>
-                        <button class="suggestion-btn" onclick="sendSuggestion('API Development with Flask')">
-                            <i class="fas fa-server"></i> API Development
-                        </button>
-                    </div>
+                    <strong><i class="fas fa-robot me-2"></i>Welcome to GenProject!</strong>
+                    <p class="mb-0">I'm your AI project idea generator. Tell me what technologies, topics, or types of projects you're interested in, and I'll help you brainstorm exciting coding projects!</p>
                 </div>
             </div>
         </div>
 
-        <div class="typing-indicator" id="typingIndicator">
+        <!-- Typing indicator (hidden by default) -->
+        <div class="typing-indicator" id="typingIndicator" style="display: none;">
             <div class="typing-dots">
                 <span></span><span></span><span></span>
             </div>
-            <span>GenProject is thinking... </span>
+            <span><i class="fas fa-brain me-1"></i>GenProject is thinking...</span>
         </div>
 
-        <div class="chat-input-container">
-            <div class="input-wrapper">
-                <textarea id="messageInput" placeholder="Describe the type of project you'd like to build..." maxlength="500" rows="1"></textarea>
-                <button id="sendButton" onclick="sendMessage()">
+        <!-- Suggestions -->
+        <div class="suggestions" id="suggestions">
+            <button class="suggestion-btn" onclick="sendSuggestion('Web development with React and Node.js')">
+                <i class="fab fa-react"></i> Web Development
+            </button>
+            <button class="suggestion-btn" onclick="sendSuggestion('Machine Learning project with Python')">
+                <i class="fas fa-brain"></i> Machine Learning
+            </button>
+            <button class="suggestion-btn" onclick="sendSuggestion('Mobile App Development')">
+                <i class="fas fa-mobile-alt"></i> Mobile App
+            </button>
+            <button class="suggestion-btn" onclick="sendSuggestion('Data Visualization project')">
+                <i class="fas fa-chart-bar"></i> Data Visualization
+            </button>
+            <button class="suggestion-btn" onclick="sendSuggestion('API Development with Flask')">
+                <i class="fas fa-server"></i> API Development
+            </button>
+        </div>
+
+        <!-- Chat Input -->
+        <div class="chat-input">
+            <div class="input-group">
+                <textarea 
+                    id="messageInput" 
+                    placeholder="Describe the type of project you'd like to build..."
+                    maxlength="500"
+                    rows="1"
+                    onkeypress="handleKeyPress(event)"
+                    oninput="updateCharCount()">
+                </textarea>
+                <button id="sendBtn" onclick="sendMessage()">
                     <i class="fas fa-paper-plane"></i>
                 </button>
             </div>
             <div class="input-footer">
-                <span class="char-count">0/500</span>
-                <span class="hint">Press Enter to send, Shift+Enter for new line</span>
+                <div class="hint">
+                    <small class="text-muted">Press Enter to send, Shift+Enter for new line</small>
+                </div>
+                <div class="char-counter">
+                    <small><span id="charCount">0</span>/500</small>
+                </div>
             </div>
         </div>
-    </div>    
+    </div>
 </div>
+
+<script>
+let socket;
+let currentSessionId = "{{ session_id }}";
+let isConnected = false;
+
+// Initialize Socket.IO connection
+function initSocket() {
+    socket = io();
+    
+    socket.on('connect', function() {
+        console.log('Connected to server');
+        isConnected = true;
+        updateConnectionStatus('connected', 'Connected');
+        
+        // Join chat session
+        socket.emit('join_chat', {
+            session_id: currentSessionId
+        });
+    });
+
+    socket.on('disconnect', function() {
+        console.log('Disconnected from server');
+        isConnected = false;
+        updateConnectionStatus('disconnected', 'Disconnected');
+    });
+
+    socket.on('connected', function(data) {
+        console.log('Welcome message:', data.message);
+    });
+
+    socket.on('chat_history', function(data) {
+        console.log('Loading chat history');
+        loadChatHistory(data.messages);
+    });
+
+    socket.on('message_confirmed', function(data) {
+        addMessage(data.type, data.content, data.timestamp);
+    });
+
+    socket.on('bot_typing', function(data) {
+        if (data.typing) {
+            showTypingIndicator();
+        } else {
+            hideTypingIndicator();
+        }
+    });
+
+    socket.on('bot_response', function(data) {
+        hideTypingIndicator();
+        addMessage(data.type, data.content, data.timestamp, data.project_id);
+        
+        // Hide suggestions after first message
+        document.getElementById('suggestions').style.display = 'none';
+    });
+
+    socket.on('error', function(data) {
+        console.error('Socket error:', data.message);
+        showToast(data.message, 'danger');
+    });
+}
+
+// Send message function
+function sendMessage() {
+    const input = document.getElementById('messageInput');
+    const message = input.value.trim();
+    
+    if (!message || !isConnected) {
+        return;
+    }
+
+    if (message.length > 500) {
+        showToast('Message too long (max 500 characters)', 'danger');
+        return;
+    }
+
+    // Clear input
+    input.value = '';
+    updateCharCount();
+    autoResize(input);
+
+    // Emit message to server
+    socket.emit('user_message', {
+        session_id: currentSessionId,
+        message: message
+    });
+
+    // Hide suggestions
+    document.getElementById('suggestions').style.display = 'none';
+}
+
+// Send suggestion
+function sendSuggestion(suggestion) {
+    const input = document.getElementById('messageInput');
+    input.value = suggestion;
+    sendMessage();
+}
+
+// Handle key press
+function handleKeyPress(event) {
+    if (event.key === 'Enter' && !event.shiftKey) {
+        event.preventDefault();
+        sendMessage();
+    }
+}
+
+// Update character count
+function updateCharCount() {
+    const input = document.getElementById('messageInput');
+    const count = document.getElementById('charCount');
+    count.textContent = input.value.length;
+    
+    // Change color based on character count
+    const remaining = 500 - input.value.length;
+    if (remaining < 50) {
+        count.style.color = '#dc3545';
+    } else if (remaining < 100) {
+        count.style.color = '#fd7e14';
+    } else {
+        count.style.color = '#6c757d';
+    }
+}
+
+// Auto-resize textarea
+function autoResize(textarea) {
+    textarea.style.height = 'auto';
+    textarea.style.height = Math.min(textarea.scrollHeight, 120) + 'px';
+}
+
+// Add message to chat
+function addMessage(type, content, timestamp, projectId = null) {
+    const messagesContainer = document.getElementById('chatMessages');
+    const messageDiv = document.createElement('div');
+    messageDiv.className = `message ${type}`;
+
+    const time = new Date(timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+    
+    let actionsHtml = '';
+    if (type === 'bot') {
+        // Escape content for safe insertion into HTML attributes
+        const escapedContent = content.replace(/'/g, "\\'").replace(/"/g, '\\"').replace(/\n/g, '\\n');
+        actionsHtml = `
+            <div class="message-actions">
+                <button class="btn-action" onclick="copyToClipboard('${escapedContent}')">
+                    <i class="fas fa-copy"></i> Copy
+                </button>
+                <button class="btn-action" onclick="regenerateResponse('${getCurrentTopic()}')">
+                    <i class="fas fa-redo"></i> Regenerate
+                </button>
+            </div>
+        `;
+    }
+
+    messageDiv.innerHTML = `
+        <div class="message-bubble">
+            ${content.replace(/\n/g, '<br>')}
+            <div class="message-time">${time}</div>
+            ${actionsHtml}
+        </div>
+    `;
+
+    messagesContainer.appendChild(messageDiv);
+    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+}
+
+// Load chat history
+function loadChatHistory(messages) {
+    const messagesContainer = document.getElementById('chatMessages');
+    // Keep only the welcome message
+    const welcomeMessage = messagesContainer.querySelector('.message.bot');
+    messagesContainer.innerHTML = '';
+    if (welcomeMessage) {
+        messagesContainer.appendChild(welcomeMessage);
+    }
+
+    messages.forEach(msg => {
+        addMessage(msg.type, msg.content, msg.timestamp);
+    });
+}
+
+// Show/hide typing indicator
+function showTypingIndicator() {
+    document.getElementById('typingIndicator').style.display = 'flex';
+    const messagesContainer = document.getElementById('chatMessages');
+    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+}
+
+function hideTypingIndicator() {
+    document.getElementById('typingIndicator').style.display = 'none';
+}
+
+// Update connection status
+function updateConnectionStatus(status, text) {
+    const statusElement = document.getElementById('connectionStatus');
+    statusElement.className = `connection-status ${status}`;
+    statusElement.querySelector('span').textContent = text;
+}
+
+// Toggle sidebar (mobile)
+function toggleSidebar() {
+    const sidebar = document.getElementById('chatSidebar');
+    sidebar.classList.toggle('show');
+}
+
+// Load project from sidebar
+function loadProject(topic, projectId) {
+    const input = document.getElementById('messageInput');
+    input.value = `Tell me more about: ${topic}`;
+    autoResize(input);
+    updateCharCount();
+    // Optionally auto-send or let user review first
+}
+
+// Copy to clipboard
+function copyToClipboard(text) {
+    // Unescape the text
+    const unescapedText = text.replace(/\\'/g, "'").replace(/\\"/g, '"').replace(/\\n/g, '\n');
+    
+    navigator.clipboard.writeText(unescapedText).then(() => {
+        showToast('Copied to clipboard!', 'success');
+    }).catch(() => {
+        // Fallback for older browsers
+        const textarea = document.createElement('textarea');
+        textarea.value = unescapedText;
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textarea);
+        showToast('Copied to clipboard!', 'success');
+    });
+}
+
+// Get current topic from last user message
+function getCurrentTopic() {
+    const messages = document.querySelectorAll('.message.user .message-bubble');
+    if (messages.length > 0) {
+        const lastMessage = messages[messages.length - 1];
+        return lastMessage.textContent.split('\n')[0].trim();
+    }
+    return 'web development';
+}
+
+// Regenerate response
+function regenerateResponse(topic) {
+    socket.emit('regenerate_response', {
+        session_id: currentSessionId,
+        topic: topic
+    });
+}
+
+// Show toast notification using your existing toast container
+function showToast(message, type = 'info') {
+    const container = document.querySelector('.toast-container');
+    if (!container) {
+        console.error('Toast container not found');
+        alert(message); // Fallback
+        return;
+    }
+    
+    const toast = document.createElement('div');
+    toast.className = `toast align-items-center text-bg-${type} border-0 show`;
+    toast.setAttribute('role', 'alert');
+    toast.setAttribute('aria-live', 'assertive');
+    toast.setAttribute('aria-atomic', 'true');
+    
+    toast.innerHTML = `
+        <div class="d-flex">
+            <div class="toast-body">${message}</div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" 
+                    onclick="this.closest('.toast').remove()" aria-label="Close"></button>
+        </div>
+    `;
+    
+    container.appendChild(toast);
+    
+    // Auto-remove after 5 seconds
+    setTimeout(() => {
+        if (toast.parentNode) {
+            toast.classList.remove('show');
+            setTimeout(() => toast.remove(), 300);
+        }
+    }, 5000);
+}
+
+// Initialize everything when DOM is loaded
+document.addEventListener('DOMContentLoaded', function() {
+    const textarea = document.getElementById('messageInput');
+    
+    // Auto-resize textarea on input
+    textarea.addEventListener('input', function() {
+        autoResize(this);
+    });
+    
+    // Initialize socket connection
+    initSocket();
+    
+    // Initialize character count
+    updateCharCount();
+    
+    // Focus on input
+    textarea.focus();
+});
+</script>
 {% endblock %}
