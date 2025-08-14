@@ -4,45 +4,43 @@
 
 {% block style %}
 <style>
-/* Chat Page Styling */
 .chat-page {
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    min-height: 100vh;
-    padding-top: 80px; /* Account for fixed navbar */
+    min-height: 93vh;
+    padding-top: 80px;
 }
 
-/* Chat Container */
 .chat-container {
     display: flex;
-    height: calc(100vh - 80px);
-    max-width: 1400px;
-    margin: 0 auto;
+    height: calc(100vh - 150px);
+    max-width: 3000px;
+    margin: 70px 0 0 0;
     background: rgba(255, 255, 255, 0.95);
     backdrop-filter: blur(20px);
-    border-radius: 20px 20px 0 0;
     box-shadow: 0 -5px 30px rgba(0, 0, 0, 0.1);
     overflow: hidden;
+    border-radius: 12px;
 }
 
-/* Sidebar */
-.sidebar {
+.chat-sidebar {
     width: 350px;
-    background: #f8f9fa;
-    border-right: 1px solid #dee2e6;
+    background: #1e293b;
+    color: white;
+    border-right: 1px solid #334155;
     display: flex;
     flex-direction: column;
     transition: transform 0.3s ease;
 }
 
-.sidebar.collapsed {
+.chat-sidebar.collapsed {
     transform: translateX(-100%);
 }
 
 .sidebar-header {
     padding: 25px 20px;
-    background: linear-gradient(135deg, #495057, #6c757d);
+    background: linear-gradient(135deg, #0f172a, #1e293b);
     color: white;
-    border-bottom: 1px solid #dee2e6;
+    border-bottom: 1px solid #334155;
 }
 
 .sidebar-header h4 {
@@ -54,10 +52,11 @@
 .sidebar-header .user-info {
     margin-top: 8px;
     font-size: 0.85rem;
-    opacity: 0.9;
+    opacity: 0.8;
+    color: #cbd5e1;
 }
 
-.sidebar-toggle {
+.chat-sidebar-toggle {
     position: absolute;
     top: 25px;
     right: 20px;
@@ -74,11 +73,11 @@
     transition: background-color 0.2s;
 }
 
-.sidebar-toggle:hover {
+.chat-sidebar-toggle:hover {
     background: rgba(255, 255, 255, 0.3);
 }
 
-.sidebar-content {
+.chat-sidebar-content {
     flex: 1;
     overflow-y: auto;
     padding: 20px;
@@ -87,22 +86,22 @@
 .connection-status {
     display: flex;
     align-items: center;
-    background: #e9ecef;
+    background: #334155;
     padding: 12px 15px;
     border-radius: 10px;
     margin-bottom: 20px;
     font-size: 0.9rem;
-    color: #495057;
+    color: #e2e8f0;
 }
 
 .connection-status.connected {
-    background: #d1e7dd;
-    color: #0f5132;
+    background: #14532d;
+    color: #bbf7d0;
 }
 
 .connection-status.disconnected {
-    background: #f8d7da;
-    color: #842029;
+    background: #7f1d1d;
+    color: #fecaca;
 }
 
 .status-dot {
@@ -110,16 +109,16 @@
     height: 8px;
     border-radius: 50%;
     margin-right: 8px;
-    background-color: #6c757d;
+    background-color: #64748b;
 }
 
 .connection-status.connected .status-dot {
-    background-color: #198754;
+    background-color: #22c55e;
     animation: pulse 2s infinite;
 }
 
 .connection-status.disconnected .status-dot {
-    background-color: #dc3545;
+    background-color: #dc2626;
 }
 
 @keyframes pulse {
@@ -128,57 +127,55 @@
 }
 
 .recent-projects h6 {
-    color: #495057;
+    color: #cbd5e1;
     font-weight: 600;
     margin-bottom: 15px;
     padding-bottom: 8px;
-    border-bottom: 2px solid #e9ecef;
+    border-bottom: 2px solid #334155;
 }
 
 .project-item {
-    background: white;
-    border: 1px solid #e9ecef;
+    background: #0f172a;
+    border: 1px solid #1e293b;
     border-radius: 12px;
     padding: 15px;
     margin-bottom: 12px;
     cursor: pointer;
     transition: all 0.3s ease;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
 
 .project-item:hover {
-    background: #f8f9fa;
-    border-color: #007bff;
-    box-shadow: 0 4px 12px rgba(0, 123, 255, 0.15);
+    background: #1e293b;
+    border-color: #38bdf8;
     transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(56, 189, 248, 0.15);
 }
 
 .project-item h6 {
     margin: 0 0 8px 0;
-    color: #212529;
+    color: #f8fafc;
     font-weight: 600;
     font-size: 0.95rem;
     line-height: 1.3;
 }
 
 .project-item .preview {
-    color: #6c757d;
+    color: #94a3b8;
     font-size: 0.85rem;
     line-height: 1.4;
     margin-bottom: 8px;
 }
 
 .project-item .timestamp {
-    color: #adb5bd;
+    color: #64748b;
     font-size: 0.75rem;
 }
 
-/* Chat Main Area */
 .chat-main {
     flex: 1;
     display: flex;
     flex-direction: column;
-    background: white;
+    background: #0f172a;
 }
 
 .chat-header {
@@ -197,18 +194,11 @@
     font-size: 1.3rem;
 }
 
-.chat-header .sidebar-toggle {
-    position: static;
-    background: rgba(255, 255, 255, 0.2);
-    color: white;
-}
-
-/* Chat Messages */
 .chat-messages {
     flex: 1;
     padding: 30px;
     overflow-y: auto;
-    background: #f8f9fa;
+    background: #0f172a;
     display: flex;
     flex-direction: column;
     gap: 20px;
@@ -244,9 +234,8 @@
 }
 
 .message.bot .message-bubble {
-    background: white;
-    color: #212529;
-    border: 1px solid #e9ecef;
+    background: #1e293b;
+    color: white;
     border-bottom-left-radius: 6px;
 }
 
@@ -263,16 +252,14 @@
 
 .message.bot .message-time {
     text-align: left;
-    color: #6c757d;
+    color: #94a3b8;
 }
 
-/* Typing Indicator */
 .typing-indicator {
     display: flex;
     align-items: center;
     padding: 18px 22px;
-    background: white;
-    border: 1px solid #e9ecef;
+    background: #1e293b;
     border-radius: 20px;
     border-bottom-left-radius: 6px;
     max-width: 75%;
@@ -290,7 +277,7 @@
 .typing-dots span {
     width: 8px;
     height: 8px;
-    background-color: #007bff;
+    background-color: #38bdf8;
     border-radius: 50%;
     animation: typing 1.4s infinite ease-in-out;
 }
@@ -310,20 +297,18 @@
     }
 }
 
-/* Suggestions */
 .suggestions {
     padding: 20px 30px;
-    background: #f8f9fa;
-    border-top: 1px solid #e9ecef;
+    background: #1e293b;
     display: flex;
     flex-wrap: wrap;
     gap: 10px;
 }
 
 .suggestion-btn {
-    background: white;
-    color: #007bff;
-    border: 2px solid #007bff;
+    background: #0f172a;
+    color: #38bdf8;
+    border: 2px solid #38bf38;
     border-radius: 25px;
     padding: 10px 18px;
     font-size: 0.85rem;
@@ -336,17 +321,16 @@
 }
 
 .suggestion-btn:hover {
-    background: #007bff;
-    color: white;
+    background: #38bdf8;
+    color: #0f172a;
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3);
+    box-shadow: 0 4px 12px rgba(56, 189, 248, 0.3);
 }
 
-/* Chat Input */
 .chat-input {
     padding: 25px 30px;
-    background: white;
-    border-top: 1px solid #e9ecef;
+    background: #0f172a;
+    border-top: 1px solid #334155;
 }
 
 .input-group {
@@ -357,28 +341,29 @@
 
 #messageInput {
     flex: 1;
-    border: 2px solid #e9ecef;
+    border: 2px solid #334155;
     border-radius: 25px;
     padding: 15px 22px;
     font-size: 1rem;
-    background: #f8f9fa;
+    background: #1e293b;
     resize: none;
     min-height: 50px;
     max-height: 120px;
     transition: all 0.3s ease;
     font-family: inherit;
     line-height: 1.4;
+    color: white;
 }
 
 #messageInput:focus {
     outline: none;
-    border-color: #007bff;
-    background: white;
-    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.15);
+    border-color: #38bdf8;
+    background: #1e293b;
+    box-shadow: 0 0 0 0.2rem rgba(56, 189, 248, 0.15);
 }
 
 #messageInput::placeholder {
-    color: #adb5bd;
+    color: #94a3b8;
 }
 
 #sendBtn {
@@ -422,71 +407,6 @@
     font-weight: 500;
 }
 
-/* Action Buttons */
-.message-actions {
-    display: flex;
-    gap: 8px;
-    margin-top: 12px;
-}
-
-.message.user .message-actions {
-    justify-content: flex-end;
-}
-
-.message.bot .message-actions {
-    justify-content: flex-start;
-}
-
-.btn-action {
-    background: rgba(0, 0, 0, 0.1);
-    border: none;
-    border-radius: 15px;
-    padding: 6px 12px;
-    font-size: 0.75rem;
-    cursor: pointer;
-    transition: all 0.2s;
-    color: inherit;
-    display: flex;
-    align-items: center;
-    gap: 4px;
-}
-
-.message.user .btn-action {
-    background: rgba(255, 255, 255, 0.2);
-    color: white;
-}
-
-.message.bot .btn-action {
-    background: #e9ecef;
-    color: #495057;
-}
-
-.btn-action:hover {
-    transform: translateY(-1px);
-}
-
-.message.user .btn-action:hover {
-    background: rgba(255, 255, 255, 0.3);
-}
-
-.message.bot .btn-action:hover {
-    background: #dee2e6;
-}
-
-/* Welcome Message Styling */
-.welcome-message {
-    background: linear-gradient(135deg, #17a2b8, #138496) !important;
-    color: white !important;
-    border: none !important;
-}
-
-.welcome-message strong {
-    font-size: 1.1rem;
-    display: block;
-    margin-bottom: 8px;
-}
-
-/* Animations */
 @keyframes fadeInUp {
     from {
         opacity: 0;
@@ -498,14 +418,12 @@
     }
 }
 
-/* Mobile Responsive */
 @media (max-width: 768px) {
     .chat-container {
         height: calc(100vh - 70px);
         border-radius: 0;
     }
-    
-    .sidebar {
+    .chat-sidebar {
         position: absolute;
         top: 0;
         left: 0;
@@ -515,88 +433,52 @@
         z-index: 30;
         box-shadow: 3px 0 15px rgba(0, 0, 0, 0.2);
     }
-    
-    .sidebar.show {
+    .chat-sidebar.show {
         transform: translateX(0);
     }
-    
     .chat-main {
         width: 100%;
     }
-    
     .message-bubble {
         max-width: 85%;
-    }
-    
-    .chat-messages {
-        padding: 20px;
-    }
-    
-    .chat-input {
-        padding: 20px;
-    }
-    
-    .chat-header {
-        padding: 20px;
-    }
-    
-    .suggestions {
-        padding: 15px 20px;
-    }
-    
-    #sendBtn {
-        width: 50px;
-        height: 50px;
     }
 }
 
 @media (max-width: 480px) {
-    .sidebar {
+    .chat-sidebar {
         width: 280px;
     }
-    
     .message-bubble {
         max-width: 90%;
         padding: 15px 18px;
     }
-    
-    .chat-messages {
-        padding: 15px;
-        gap: 15px;
-    }
-    
-    .input-group {
-        gap: 10px;
-    }
-    
-    #sendBtn {
-        width: 45px;
-        height: 45px;
-        font-size: 1rem;
-    }
 }
 
-/* Scrollbar Styling */
-.sidebar-content::-webkit-scrollbar,
+.chat-sidebar-content,
+.chat-messages {
+    scrollbar-width: thin;
+    scrollbar-color: #94a3b8 transparent;
+}
+
+.chat-sidebar-content::-webkit-scrollbar,
 .chat-messages::-webkit-scrollbar {
     width: 6px;
 }
 
-.sidebar-content::-webkit-scrollbar-track,
+.chat-sidebar-content::-webkit-scrollbar-track,
 .chat-messages::-webkit-scrollbar-track {
-    background: #f1f1f1;
-    border-radius: 3px;
+    background: transparent;
 }
 
-.sidebar-content::-webkit-scrollbar-thumb,
+.chat-sidebar-content::-webkit-scrollbar-thumb,
 .chat-messages::-webkit-scrollbar-thumb {
-    background: #c1c1c1;
+    background: #94a3b8;
     border-radius: 3px;
 }
 
-.sidebar-content::-webkit-scrollbar-thumb:hover,
+.chat-sidebar-content::-webkit-scrollbar-thumb:hover,
 .chat-messages::-webkit-scrollbar-thumb:hover {
-    background: #a8a8a8;
+    background: #64748b;
 }
 </style>
 {% endblock %}
@@ -605,17 +487,16 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.2/socket.io.js"></script>
 
 <div class="chat-container">
-    <!-- Sidebar -->
-    <div class="sidebar" id="chatSidebar">
+    <div class="chat-sidebar" id="chatSidebar">
         <div class="sidebar-header">
             <h4><i class="fas fa-lightbulb me-2"></i>GenProject Chat</h4>
             <div class="user-info">{{ user.name }} (@{{ user.username }})</div>
-            <button class="sidebar-toggle d-md-none" onclick="toggleSidebar()">
+            <button class="chat-sidebar-toggle d-md-none" onclick="toggleSidebar()">
                 <i class="fas fa-times"></i>
             </button>
         </div>
 
-        <div class="sidebar-content">
+        <div class="chat-sidebar-content">
             <div class="connection-status" id="connectionStatus">
                 <div class="status-dot"></div>
                 <span>Connecting...</span>
@@ -627,7 +508,7 @@
                     {% for project in recent_projects %}
                         <div class="project-item" onclick="loadProject('{{ project.topic|e }}', {{ project.id }})">
                             <h6>{{ project.topic }}</h6>
-                            <div class="preview">{{ project.content[:100] }}{% if project.content|length > 100 %}...{% endif %}</div>
+                            <div class="preview">{{ project.content[83:100] }}{% if project.content|length > 100 %}...{% endif %}</div>
                             <div class="timestamp">{{ project.timestamp.strftime("%b %d, %Y at %I:%M %p") }}</div>
                         </div>
                     {% endfor %}
@@ -654,7 +535,7 @@
     <div class="chat-main">
         <div class="chat-header">
             <h4><i class="fas fa-comments me-2"></i>Project Idea Generator</h4>
-            <button class="sidebar-toggle d-md-none" onclick="toggleSidebar()">
+            <button class="chat-sidebar-toggle d-md-none" onclick="toggleSidebar()">
                 <i class="fas fa-bars"></i>
             </button>
         </div>
@@ -713,7 +594,7 @@
             </div>
             <div class="input-footer">
                 <div class="hint">
-                    <small class="text-muted">Press Enter to send, Shift+Enter for new line</small>
+                    <small>Press Enter to send, Shift+Enter for new line</small>
                 </div>
                 <div class="char-counter">
                     <small><span id="charCount">0</span>/500</small>
@@ -860,12 +741,23 @@ function addMessage(type, content, timestamp, projectId = null) {
     const time = new Date(timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
     
     let actionsHtml = '';
+    let displayContent = content;
+    let escapedForCopy = content;
+
     if (type === 'bot') {
-        // Escape content for safe insertion into HTML attributes
-        const escapedContent = content.replace(/'/g, "\\'").replace(/"/g, '\\"').replace(/\n/g, '\\n');
+        displayContent = content
+            .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') // bold
+            .replace(/^\* (.*)$/gm, '• $1')                   // bullet
+            .replace(/\n/g, '<br>'); 
+
+        escapedForCopy = content
+            .replace(/'/g, "\\'")
+            .replace(/"/g, '\\"')
+            .replace(/\n/g, '\\n');
+
         actionsHtml = `
             <div class="message-actions">
-                <button class="btn-action" onclick="copyToClipboard('${escapedContent}')">
+                <button class="btn-action" onclick="copyToClipboard('${escapedForCopy}')">
                     <i class="fas fa-copy"></i> Copy
                 </button>
                 <button class="btn-action" onclick="regenerateResponse('${getCurrentTopic()}')">
@@ -877,7 +769,7 @@ function addMessage(type, content, timestamp, projectId = null) {
 
     messageDiv.innerHTML = `
         <div class="message-bubble">
-            ${content.replace(/\n/g, '<br>')}
+            ${displayContent}
             <div class="message-time">${time}</div>
             ${actionsHtml}
         </div>
