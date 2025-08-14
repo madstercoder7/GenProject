@@ -2,6 +2,7 @@ from flask import Flask, render_template, request, redirect, url_for, flash, ses
 from flask_sqlalchemy import SQLAlchemy
 from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, SubmitField, TextAreaField
+from flask_session import Session
 from wtforms.validators import DataRequired, Length
 from werkzeug.security import generate_password_hash, check_password_hash
 from utils import generate_project_idea, login_required, validate_input
@@ -19,24 +20,28 @@ from sqlalchemy import text
 from sqlalchemy.exc import OperationalError
 from flask_socketio import SocketIO, emit, disconnect
 import uuid
+import redis
 
 app = Flask(__name__)
 
 # Configuration
-app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(minutes=5)
+app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(hours=1)
 app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv("DATABASE_URL")
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SECRET_KEY'] = os.getenv("SECRET_KEY")
 app.config['SESSION_COOKIE_SECURE'] = True
 app.config['SESSION_COOKIE_HTTPONLY'] = True
 app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
+app.config["SESSION_TYPE"] = "redis"
+app.config["SESSION_REDIS"] = redis.from_url(os.getenv("REDIS_URL"))
 
 if not app.config['SECRET_KEY']:
     raise ValueError("No SECRET_KEY set for Flask application")
 
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)
-socketio = SocketIO(app, cors_allowed_origins="*", manage_session=False)
+Session(app)
+socketio = SocketIO(app, cors_allowed_origins="*", manage_session=False, ping_interval=20, ping_timeout=35)
 chat_sessions = {}
 
 @app.before_request
@@ -108,12 +113,8 @@ class ChatMessage(db.Model):
     content = db.Column(db.Text, nullable=False)
     timestamp = db.Column(db.DateTime, default=datetime.now)
 
-with app.app_context():
-    db.create_all()
-
 REDIS_URL = os.getenv("REDIS_URL")
 limiter = Limiter(get_remote_address, app=app, default_limits=["200 per day", "50 per hour"], storage_uri=REDIS_URL)
-limiter.init_app(app)
 
 @app.errorhandler(RateLimitExceeded)
 def ratelimit_handler(e):
@@ -204,7 +205,7 @@ def handle_user_message(data):
     try:
         user_msg = ChatMessage(
             session_id=session_id,
-            message_type="use",
+            message_type="user",
             content=clean_message
         )
         db.session.add(user_msg)
@@ -304,7 +305,7 @@ def handle_regenerate(data):
             "error": True
         })
     finally:
-        emit("bot_tying", {"typing": False})
+        emit("bot_typing", {"typing": False})
 
 # Routes
 @app.route('/')
@@ -395,8 +396,11 @@ def logout():
 @login_required
 def chat():
     user = get_current_user()
+    if not user:
+        flash("Please log in again", "warning")
+        return redirect(url_for("login"))
+    
     session_id = str(uuid.uuid4())
-
     recent_projects = ProjectIdea.query.filter_by(user_id=user.id).order_by(ProjectIdea.timestamp.desc()).limit(10).all()
 
     return render_template("chat.html", session_id=session_id, user=user, recent_projects=recent_projects)
@@ -481,7 +485,7 @@ def history():
 @app.route('/health')
 def health():
     try:
-        db.session.execute("SELECT 1")
+        db.session.execute(text("SELECT 1"))
         return "OK", 200
     except:
         return "Database unreachable", 500
