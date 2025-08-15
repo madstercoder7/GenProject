@@ -3,7 +3,7 @@ import time
 import logging
 from groq import Groq
 from dotenv import load_dotenv
-from flask import session, flash, redirect, url_for
+from flask import session, flash, redirect, url_for, jsonify
 from functools import wraps
 import bleach
 
@@ -117,8 +117,7 @@ def login_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
         if 'user_id' not in session:
-            flash("Please login to access this page.", "warning")
-            return redirect(url_for("login"))
+            return jsonify({"error": "Unauthorized"}), 401
         return f(*args, **kwargs)
     return decorated_function
 
