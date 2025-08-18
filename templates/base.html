@@ -25,11 +25,6 @@
                 <ul class="navbar-nav ms-auto">
                     {% if session.get("user_id") %}
                         <li class="nav-item">
-                            <a href="{{ url_for('chat') }}" class="nav-link">
-                                <i class="fas fa-comments me-1"></i>Chat
-                            </a>
-                        </li>
-                        <li class="nav-item">
                             <a class="nav-link" href="{{ url_for('generate') }}">
                                 <i class="fas fa-lightbulb me-1"></i>Generate
                             </a>

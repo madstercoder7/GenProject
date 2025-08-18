@@ -90,10 +90,20 @@ class ProjectIdea(db.Model):
     topic = db.Column(db.String(100), nullable=False)
     content = db.Column(db.Text, nullable=False)
     timestamp = db.Column(db.DateTime, default=datetime.now)
+    chat_messages = db.relationship("ChatMessage", backref="project", lazy=True, cascade="all, delete-orphan")
 
     def __repr__(self):
         return f"Project Idea: {self.topic}"
     
+class ChatMessage(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    project_id = db.Column(db.Integer, db.ForeignKey("project_idea.id"), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
+    role = db.Column(db.String(10), nullable=False)
+    content = db.Column(db.Text, nullable=False)
+    timestamp = db.Column(db.DateTime, default=datetime.now)
+
+
 REDIS_URL = os.getenv("REDIS_URL")
 limiter = Limiter(get_remote_address, app=app, default_limits=["200 per day", "50 per hour"], storage_uri=REDIS_URL)
 
@@ -215,6 +225,51 @@ def history():
 
     return jsonify(history_data)
 
+@app.route("/chat", methods=["POST"])
+@login_required
+def chat():
+    user_id = session.get("user_id")
+    data = request.get_json()
+    message_text = bleach.clean(data.get("message", ""), tags=['p', 'strong', 'em'], strip=True)
+    project_id = data.get("project_id")
+    if not project_id or not ProjectIdea.query.filter_by(id=project_id, user_id=user_id).first():
+        return jsonify({"error": "Invalid or missing project id"}), 400
+
+    user_msg = ChatMessage(
+        user_id=user_id,
+        project_id=project_id,
+        role="user",
+        content=message_text
+    )
+    db.session.add(user_msg)
+    db.session.commit()
+
+    conversation = ChatMessage.query.filter_by(user_id=user_id, project_id=project_id).order_by(ChatMessage.timestamp.asc()).all()
+    messages_for_llm = [
+        {"role": msg.role, "content": msg.content}
+        for msg in conversation[-10:]
+    ]
+
+    ai_reply = generate_project_idea(messages_for_llm)
+
+    ai_msg = ChatMessage(
+        user_id=user_id,
+        project_id=project_id,
+        role="ai",
+        content=ai_reply
+    )
+    db.session.add(ai_msg)
+    db.session.commit()
+
+    chat_history = [
+        {
+            "role": msg.role,
+            "content": msg.content,
+            "timestamp": msg.timestamp.strftime("%Y-%m-%d %H:%M")
+        }
+        for msg in conversation
+    ]
+    return jsonify({"reply": ai_reply, "history": chat_history})
 
 @app.route('/health')
 def health():

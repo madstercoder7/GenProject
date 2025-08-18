@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block content %} 
+<h1>AI Project Idea Generator</h1>
+<div id="chat-box"></div>
+<form id="prompt-form">
+    <input type="text" id="prompt-input" placeholder="What are you interested in making today?" required>
+    <button type="submit">Send</button>
+</form>
+
+<script>
+    const chatBox = document.getElementById("chat-box");
+    const promptForm = document.getElementById("prompt-form");
+    const promptInput = document.getElementById("prompt-input");
+
+    function addMessage(content, role) {
+        const msg = document.createElement("div");
+        msg.classList.add("message", role);
+        msg.textContent = content;
+        chatBox.appendChild(msg);
+        chatBox.scrollTop = chatBox.scrollHeight;
+    }
+
+    promptForm.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const prompt = promptInput.value.trim();
+        if(!prompt) return;
+        
+        addMessage(prompt, "user");
+        promptInput.value = "";
+
+        try {
+            const res = await fetch("/generate", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ prompt })
+            });
+
+            const data = await res.json();
+            if (res.ok) {
+                addMessage(data.idea, "assistant");
+            } else {
+                addMessage(data.error || "Something went wrong", "assistant");
+            }
+        } catch (err) {
+            addMessage("Error: " + err.message, "assistant");
+        }
+    });
+</script>
+{% endblock %}
