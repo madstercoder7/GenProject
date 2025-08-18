@@ -191,7 +191,7 @@ def login():
                 session["user_id"] = user.id
                 session["username"] = user.username
                 flash(f"Welcome back, {user.name}", "success")
-                return redirect(url_for("generate"))
+                return redirect(url_for("get_generate"))
             else:
                 flash("Invalid username or password", "danger")
                 return render_template("login.html", form=form)
@@ -225,6 +225,11 @@ def history():
 
     return jsonify(history_data)
 
+@app.route("/generate", methods=["GET"])
+@login_required
+def get_generate():
+    return render_template("generate.html")
+
 @app.route("/chat", methods=["POST"])
 @login_required
 def chat():
@@ -255,7 +260,7 @@ def chat():
     ai_msg = ChatMessage(
         user_id=user_id,
         project_id=project_id,
-        role="ai",
+        role="assistant",
         content=ai_reply
     )
     db.session.add(ai_msg)
@@ -270,6 +275,18 @@ def chat():
         for msg in conversation
     ]
     return jsonify({"reply": ai_reply, "history": chat_history})
+
+@app.route("/create_project", methods=["POST"])
+@login_required
+def create_project():
+    user_id = session.get("user_id")
+    data = request.get_json()
+    topic = bleach.clean(data.get("topic", ""))
+    content = bleach.clean(data.get("content", ""))
+    new_project = ProjectIdea(user_id=user_id, topic=topic, content=content)
+    db.session.add(new_project)
+    db.session.commit()
+    return jsonify({"id": new_project.id})
 
 @app.route('/health')
 def health():

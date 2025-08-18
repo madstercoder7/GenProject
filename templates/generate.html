@@ -1,49 +1,44 @@
 {% extends "base.html" %}
-{% block content %} 
-<h1>AI Project Idea Generator</h1>
-<div id="chat-box"></div>
-<form id="prompt-form">
-    <input type="text" id="prompt-input" placeholder="What are you interested in making today?" required>
-    <button type="submit">Send</button>
-</form>
 
-<script>
-    const chatBox = document.getElementById("chat-box");
-    const promptForm = document.getElementById("prompt-form");
-    const promptInput = document.getElementById("prompt-input");
+{% block title %}GenProject: Project{% endblock %}
 
-    function addMessage(content, role) {
-        const msg = document.createElement("div");
-        msg.classList.add("message", role);
-        msg.textContent = content;
-        chatBox.appendChild(msg);
-        chatBox.scrollTop = chatBox.scrollHeight;
-    }
-
-    promptForm.addEventListener("submit", async (e) => {
-        e.preventDefault();
-        const prompt = promptInput.value.trim();
-        if(!prompt) return;
-        
-        addMessage(prompt, "user");
-        promptInput.value = "";
-
-        try {
-            const res = await fetch("/generate", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ prompt })
-            });
-
-            const data = await res.json();
-            if (res.ok) {
-                addMessage(data.idea, "assistant");
-            } else {
-                addMessage(data.error || "Something went wrong", "assistant");
-            }
-        } catch (err) {
-            addMessage("Error: " + err.message, "assistant");
-        }
-    });
-</script>
+{% block content %}
+<div class="generate-container d-flex flex-row">
+<aside id="sidebar" class="sidebar">
+    <div class="sidebar-header d-flex justify-content-between align-items-center">
+    <h4>Your Projects</h4>
+    <button id="newProjectBtn" class="btn btn-outline-glass">+ New Project</button>
+    </div>
+    <ul id="projectList" class="history-list"></ul>
+    <div id="emptyProjects" class="empty-history" style="display:none;">No projects yet. Create one!</div>
+</aside>
+<main class="main-content-area flex-grow-1">
+    <div id="chatHistory" class="mb-5"></div>
+    <div class="input-container">
+    <form id="chatForm" class="generate-form d-flex">
+        <input type="text" id="messageInput" class="form-control topic-input" placeholder="Ask a coding question..." autocomplete="off" />
+        <button type="submit" class="btn submit-btn">Send</button>
+    </form>
+    </div>
+</main>
+</div>
+<div class="modal" id="newProjectModal" tabindex="-1" style="display:none;">
+<div class="modal-dialog">
+    <div class="modal-content">
+    <form id="newProjectForm">
+        <div class="modal-header">
+        <h5 class="modal-title">New Project Idea</h5>
+        <button type="button" class="btn-close" id="closeProjectModal"></button>
+        </div>
+        <div class="modal-body">
+        <input type="text" id="newProjectTitle" class="form-control" placeholder="Short Project Title" required />
+        <textarea id="newProjectDesc" class="form-control mt-2" placeholder="Brief description (optional)"></textarea>
+        </div>
+        <div class="modal-footer">
+        <button type="submit" class="btn btn-primary">Create</button>
+        </div>
+    </form>
+    </div>
+</div>
+</div>
 {% endblock %}
