@@ -22,7 +22,7 @@ body {
     color: var(--text-color);
     font-family: "Inter", "Segoe UI", sans-serif;
     line-height: 1.6;
-    padding-top: 70px; 
+    padding-top: 140px;
 }
 
 .navbar {
@@ -229,6 +229,10 @@ body {
     max-width: 400px;
 }
 
+.form-group {
+    padding-bottom: 15px;
+}
+
 .form-label {
     font-weight: 600;
 }
@@ -245,6 +249,10 @@ body {
     border-color: var(--accent);
     box-shadow: 0 0 0 2px rgba(6, 182, 212, 0.25);
     color: var(--text-color);
+}
+
+.form-info {
+    margin-top: 0.5rem;
 }
 
 .error {
