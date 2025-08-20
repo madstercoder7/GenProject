@@ -45,7 +45,7 @@ function fetchChatHistory() {
     fetch("/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message, project_id: selectedProjectId })
+        body: JSON.stringify({ message: "", project_id: selectedProjectId })
     })
     .then(res => res.json())
     .then(data => renderChatHistory(data.history));

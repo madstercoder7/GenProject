@@ -86,6 +86,7 @@ class User(db.Model):
 
 class ProjectIdea(db.Model):
     id = db.Column(db.Integer, primary_key=True)
+    public_id = db.Column(db.String(36), unique=True, nullable=True, default=lambda: str(uuid.uuid4()))
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     topic = db.Column(db.String(100), nullable=False)
     content = db.Column(db.Text, nullable=False)
@@ -212,7 +213,7 @@ def logout():
 @login_required
 def history():
     user_id = session.get("user_id")
-    projects = ProjectIdea.query.filter_by(user_id=user_id).order_by(ProjectIdea.timestamp.desc()).all()
+    projects = ProjectIdea.query.filter(ProjectIdea.user_id==user_id, ProjectIdea.public_id!=None).order_by(ProjectIdea.timestamp.desc()).all()
 
     history_data = []
     for project in projects:
