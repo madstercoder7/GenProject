@@ -229,7 +229,22 @@ def history():
 @app.route("/generate", methods=["GET"])
 @login_required
 def get_generate():
-    return render_template("generate.html")
+    user_id = session.get("user_id")
+    project = ProjectIdea.query.filter(ProjectIdea.user_id==user_id, ProjectIdea.public_id!=None).order_by(ProjectIdea.timestamp.desc()).first()
+
+    chat_history = []
+    if project:
+        conversation = ChatMessage.query.filter_by(user_id=user_id, project_id=project.id).order_by(ChatMessage.timestamp.asc()).all()
+        chat_history = [
+            {
+                "role": msg.role,
+                "content": msg.content,
+                "timestamp": msg.timestamp.strftime("%Y-%m-%d %H:%M")
+            }
+            for msg in conversation
+        ]
+
+    return render_template("generate.html", chat_history=chat_history, selected_project=project)
 
 @app.route("/chat", methods=["POST"])
 @login_required
@@ -237,20 +252,21 @@ def chat():
     user_id = session.get("user_id")
     data = request.get_json()
     message_text = bleach.clean(data.get("message", ""), tags=['p', 'strong', 'em'], strip=True)
-    project_id = data.get("project_id")
-    if not project_id or not ProjectIdea.query.filter_by(id=project_id, user_id=user_id).first():
+    project_public_id = data.get("project_id")
+    project = ProjectIdea.query.filter_by(public_id=project_public_id, user_id=user_id).first()
+    if not project:
         return jsonify({"error": "Invalid or missing project id"}), 400
 
     user_msg = ChatMessage(
         user_id=user_id,
-        project_id=project_id,
+        project_id=project.id,
         role="user",
         content=message_text
     )
     db.session.add(user_msg)
     db.session.commit()
 
-    conversation = ChatMessage.query.filter_by(user_id=user_id, project_id=project_id).order_by(ChatMessage.timestamp.asc()).all()
+    conversation = ChatMessage.query.filter_by(user_id=user_id, project_id=project.id).order_by(ChatMessage.timestamp.asc()).all()
     messages_for_llm = [
         {"role": msg.role, "content": msg.content}
         for msg in conversation[-10:]
@@ -260,7 +276,7 @@ def chat():
 
     ai_msg = ChatMessage(
         user_id=user_id,
-        project_id=project_id,
+        project_id=project.id,
         role="assistant",
         content=ai_reply
     )
@@ -287,7 +303,7 @@ def create_project():
     new_project = ProjectIdea(user_id=user_id, topic=topic, content=content)
     db.session.add(new_project)
     db.session.commit()
-    return jsonify({"id": new_project.id})
+    return jsonify({"public_id": new_project.public_id})
 
 @app.route('/health')
 def health():

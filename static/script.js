@@ -15,14 +15,14 @@ function fetchProjects() {
               const li = document.createElement("li");
               li.textContent = project.topic;
               li.className = "history-item";
-              li.onclick = () => selectProject(project.id);
+              li.onclick = () => selectProject(project.public_id);
               list.appendChild(li);
           });
       });
 }
 
-function selectProject(projectId) {
-    selectedProjectId = projectId;
+function selectProject(publicId) {
+    selectedProjectId = publicId;
     fetchChatHistory();
 }
 
@@ -88,7 +88,7 @@ document.getElementById("newProjectForm").onsubmit = function(e) {
     .then(data => {
         document.getElementById("newProjectModal").style.display = "none";
         fetchProjects();
-        selectProject(data.id);
+        selectProject(data.public_id);
     });
 };
 document.getElementById("chatForm").onsubmit = function(e) {
@@ -97,4 +97,6 @@ document.getElementById("chatForm").onsubmit = function(e) {
     if (msg) sendMessage(msg);
 };
 
-window.onload = fetchProjects;
+window.onload = function() {
+    fetchProjects();
+};

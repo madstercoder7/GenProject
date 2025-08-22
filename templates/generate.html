@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}GenProject: Project{% endblock %}
+{% block title %}GenProject: {{ selected_project.topic if selected_project else "No project" }}{% endblock %}
 
 {% block content %}
 <div class="generate-container d-flex flex-row">
@@ -13,7 +13,19 @@
     <div id="emptyProjects" class="empty-history" style="display:none;">No projects yet. Create one!</div>
 </aside>
 <main class="main-content-area flex-grow-1">
-    <div id="chatHistory" class="mb-5"></div>
+    <div id="chatHistory" class="mb-5">
+        {% for msg in chat_history %}
+            <div class="message mb-2 {{ 'bg-primary text-white' if msg.role == 'user' else 'bg-light text-dark' }}">
+                <div class="message-header">
+                    <span>{{ 'You' if msg.role == 'user' else 'AI Mentor' }}</span>
+                    <span class="timestamp">{{ msg.timestamp }}</span>
+                </div>
+                <div class="message-content">{{ msg.content|safe }}</div>
+            </div>
+        {% else %}
+            <p>No chat history yet.</p>
+        {% endfor %}
+    </div>
     <div class="input-container">
     <form id="chatForm" class="generate-form d-flex">
         <input type="text" id="messageInput" class="form-control topic-input" placeholder="Ask a coding question..." autocomplete="off" />
