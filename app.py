@@ -256,6 +256,18 @@ def chat():
     project = ProjectIdea.query.filter_by(public_id=project_public_id, user_id=user_id).first()
     if not project:
         return jsonify({"error": "Invalid or missing project id"}), 400
+    
+    if not message_text.strip():
+        conversation = ChatMessage.query.filter_by(user_id=user_id, project_id=project.id).order_by(ChatMessage.timestamp.asc()).all()
+        chat_history = [
+            {
+                "role": msg.role,
+                "content": msg.content,
+                "timestamp": msg.timestamp.strftime("%Y-%m-%d %H:%M")
+            }
+            for msg in conversation
+        ]
+        return jsonify({"history": chat_history})
 
     user_msg = ChatMessage(
         user_id=user_id,
