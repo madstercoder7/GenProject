@@ -306,6 +306,51 @@ body {
     margin-right: 10px;
 }
 
+.ai-message {
+    background: #222232;
+    color: #e6edf3;
+    border-radius: 10px;
+    padding: 18px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+    line-height: 1.7;
+    border-left: 3px solid #06b6d4;
+    font-size: 1rem;
+    margin-bottom: 10px;
+}
+
+.ai-message ul, .ai-message ol {
+    margin-left: 20px;
+}
+
+.ai-message strong {
+    color: #06b6d4;
+}
+
+.user-message {
+    background: var(--primary);
+    color: white;
+    border-radius: 10px;
+    padding: 18px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+    line-height: 1.7;
+    font-size: 1rem;
+    margin-bottom: 10px;
+}
+
+.message-header {
+    display: flex;
+    justify-content: space-between;
+    font-weight: 600;
+    margin-bottom: 6px;
+    opacity: 0.9;
+}
+
+.timestamp {
+    font-weight: 400;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+
 .footer {
     padding: 20px 0;
     background: var(--bg-secondary);

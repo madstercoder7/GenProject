@@ -1,102 +1,169 @@
 let selectedProjectId = null;
 
+function $(id) {
+    return document.getElementById(id);
+}
+
+function on(id, event, handler) {
+    const el = $(id);
+    if (el) el.addEventListener(event, handler);
+}
+
+function showToast(message, category = "danger") {
+    const container = document.querySelector(".toast-container");
+    if (!container) {
+        alert(message);
+        return;
+    }
+
+    const wrapper = document.createElement("div");
+    wrapper.className = `toast align-items-center text-bg-${category} border-0 show`;
+    wrapper.setAttribute("role", "alert");
+    wrapper.innerHTML = `
+        <div class="d-flex">
+            <div class="toast-body">${message}</div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+    `;
+    container.appendChild(wrapper);
+    setTimeout(() => wrapper.remove(), 4000);
+}
+
+function safeFetch(url, opts) {
+    return fetch(url, opts).then(async (res) => {
+        if (!res.ok) {
+            let detail = "";
+            try { detail = (await res.json()).error || await res.text(); } catch{}
+            throw new Error(detail || `HTTP ${res.status}`);
+        }
+        const ct = res.headers.get("content-type") || "";
+        if (ct.includes("application/json")) return res.json();
+        return res.text();
+    });
+}
+
 function fetchProjects() {
-    fetch("/history")
-      .then(res => res.json())
-      .then(data => {
-          const list = document.getElementById("projectList");
-          list.innerHTML = "";
-          if (data.length === 0) {
-              document.getElementById("emptyProjects").style.display = "block";
-              return;
-          }
-          document.getElementById("emptyProjects").style.display = "none";
-          data.forEach(project => {
-              const li = document.createElement("li");
-              li.textContent = project.topic;
-              li.className = "history-item";
-              li.onclick = () => selectProject(project.public_id);
-              list.appendChild(li);
-          });
-      });
+    if (!$("projectList")) return;
+
+    safeFetch("/history")
+    .then((data) => {
+        const list = $("projectList");
+        list.innerHTML = "";
+        if (!Array.isArray(data) || data.length === 0) {
+            if ($("emptyProjects")) $("emptyProjects").style.display = "block";
+            return;
+        }
+        if ($("emptyProjects")) $("emptyProjects").style.display = "none";
+        data.forEach((project) => {
+            const li = document.createElement("li");
+            li.textContent = project.topic;
+            li.className = "history-item";
+            li.onclick = () => selectedProjectId(project.public_id);
+            list.appendChild(li);
+        });
+
+        if (!selectedProjectId && data[0]?.public_id) {
+            selectedProjectId(data[0].public_id);
+        }
+    })
+    .catch((err) => {
+        showToast(`Failed to load projects: ${err.message}`, "warning");
+    });
 }
 
 function selectProject(publicId) {
     selectedProjectId = publicId;
-    fetchChatHistory();
+    fetchChathistory();
 }
 
 function sendMessage(message) {
     if (!selectedProjectId || !message) return;
-    fetch("/chat", {
+    safeFetch("/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message, project_id: selectedProjectId })
+        body: JSON.stringify({ message, project_id: selectedProjectId }),
     })
-    .then(res => res.json())
-    .then(data => {
+    .then((data) => {
         renderChatHistory(data.history);
-        document.getElementById("messageInput").value = "";
-    });
+        if ($("messageInput")) $("messageInput").value = "";
+    })
+    .catch((err) => showToast(`Failed to send: ${err.message}`));
 }
 
-function fetchChatHistory() {
+function fetchChathistory() {
     if (!selectedProjectId) return;
-    fetch("/chat", {
+    safeFetch("/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: "", project_id: selectedProjectId })
+        body: JSON.stringify({ message: "", project_id: selectedProjectId }),
     })
-    .then(res => res.json())
-    .then(data => renderChatHistory(data.history));
+    .then((data) => {
+        if (data?.history) renderChatHistory(data.history);
+    })
+    .catch((err) => showToast(`Failed to load chat: ${err.message}`));
 }
 
 function renderChatHistory(history) {
-    const chatDiv = document.getElementById("chatHistory");
+    const chatDiv = $("chatHistory");
+    if (!chatDiv) return;
     chatDiv.innerHTML = "";
-    history.forEach(msg => {
+    history.forEach((msg) => {
         const bubble = document.createElement("div");
-        bubble.className = "message mb-2 " + (msg.role === "user" ? "bg-primary text-white" : "bg-light text-dark");
+        const userClass = msg.role === "user" ? "user-message" : "ai-message";
+        bubble.className = "message mb-2 " + userClass;
+
+        let formattedContent = msg.content;
+        if (msg.role === "assistant") {
+            try {
+                formattedContent = marked.parse(msg.content);
+            } catch {
+                formattedContent = msg.content;
+            }
+        }
+
         bubble.innerHTML = `
             <div class="message-header">
-                <span>${msg.role === "user" ? "You" : "assistant"}</span>
-                <span class="timestamp">${msg.timestamp}</span>
+                <span>${msg.role === "user" ? "You" : "AI Mentor"}</span>
+                <span class="timestamp">${msg.timestamp || ""}</span>
             </div>
-            <div class="message-content">${msg.content}</div>
+            <div class="message-content">${formattedContent}</div>
         `;
         chatDiv.appendChild(bubble);
     });
     chatDiv.scrollTop = chatDiv.scrollHeight;
 }
 
-document.getElementById("newProjectBtn").onclick = () => {
-    document.getElementById("newProjectModal").style.display = "block";
-};
-document.getElementById("closeProjectModal").onclick = () => {
-    document.getElementById("newProjectModal").style.display = "none";
-};
-document.getElementById("newProjectForm").onsubmit = function(e) {
+on("newProjectBtn", "click", () => {
+    if ($("newProjectModal")) $("newProjectModal").style.display = "block";
+});
+
+on("closeProjectModal", "click", () => {
+    if ($("newProjectModal")) $("newProjectModal").style.display = "none";
+});
+on("newProjectForm", "submit", (e) => {
     e.preventDefault();
-    const title = document.getElementById("newProjectTitle").value;
-    const desc = document.getElementById("newProjectDesc").value;
-    fetch("/create_project", {
+    const title = $("newProjectTitle")?.value?.trim();
+    const desc = $("newProjectDesc")?.value?.trim() || "";
+    if (!title) return showToast("Please provide a project title", "warning");
+    safeFetch("/create_project", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ topic: title, content: desc })
+        body: JSON.stringify({ topic: title, content: desc }),
     })
-    .then(res => res.json())
-    .then(data => {
-        document.getElementById("newProjectModal").style.display = "none";
+    .then((data) => {
+        if ($("newProjectModal")) $("newProjectModal").style.display = "none";
         fetchProjects();
-        selectProject(data.public_id);
-    });
-};
-document.getElementById("chatForm").onsubmit = function(e) {
-    e.preventDefault();
-    const msg = document.getElementById("messageInput").value.trim();
-    if (msg) sendMessage(msg);
-};
+        if (data?.public_id) selectProject(data.public_id);
+    })
+    .catch((err) => showToast(`Failed to create project: ${err.message}`));
+});
 
-window.onload = function() {
-    fetchProjects();
-};
+on("chatForm", "submit", (e) => {
+    e.preventDefault();
+    const msg = $("messageInput")?.value?.trim();
+    if (msg) sendMessage(msg);
+});
+
+window.addEventListener("load", () => {
+    if ($("projectList")) fetchProjects();
+})

@@ -21,6 +21,15 @@ from sqlalchemy.exc import OperationalError
 import uuid
 import redis
 
+ALLOWED_TAGS = bleach.sanitizer.ALLOWED_TAGS.union({
+    'p', 'pre', 'code', 'blockquote', 'ul', 'ol', 'li', 'strong', 'em', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'a'
+})
+
+ALLOWED_ATTRS = {
+    **bleach.sanitizer.ALLOWED_ATTRIBUTES,
+    "a": ["href", "title", "rel", "target"]
+}
+
 app = Flask(__name__)
 
 # Configuration
@@ -28,10 +37,10 @@ app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(hours=1)
 app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv("DATABASE_URL")
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SECRET_KEY'] = os.getenv("SECRET_KEY")
-app.config['SESSION_COOKIE_SECURE'] = True
+app.config['SESSION_COOKIE_SECURE'] = os.getenv("FLASK_SECURE_COOKIES", "1") == "1"
 app.config['SESSION_COOKIE_HTTPONLY'] = True
-app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
-app.config["SESSION_TYPE"] = "redis"
+app.config['SESSION_COOKIE_SAMESITE'] = os.getenv("FLASK_SAMESITE", "Lax")
+app.config['SESSION_TYPE'] = "redis"
 app.config["SESSION_REDIS"] = redis.from_url(os.getenv("REDIS_URL"))
 
 if not app.config['SECRET_KEY']:
@@ -106,7 +115,10 @@ class ChatMessage(db.Model):
 
 
 REDIS_URL = os.getenv("REDIS_URL")
-limiter = Limiter(get_remote_address, app=app, default_limits=["200 per day", "50 per hour"], storage_uri=REDIS_URL)
+if REDIS_URL:
+    app.config["SESSION_REDIS"] = redis.from_url(REDIS_URL)
+    
+limiter = Limiter(get_remote_address, app=app, default_limits=["200 per day", "50 per hour"], storage_uri=REDIS_URL if REDIS_URL else "memory://")
 
 @app.errorhandler(RateLimitExceeded)
 def ratelimit_handler(e):
@@ -219,6 +231,7 @@ def history():
     for project in projects:
         history_data.append({
             "id": project.id,
+            "public_id": project.public_id,
             "topic": project.topic,
             "content": project.content[:200] + "..." if len(project.content) > 200 else project.content,
             "timestamp": project.timestamp.strftime("%Y-%m-%d %H:%M")
@@ -235,14 +248,21 @@ def get_generate():
     chat_history = []
     if project:
         conversation = ChatMessage.query.filter_by(user_id=user_id, project_id=project.id).order_by(ChatMessage.timestamp.asc()).all()
-        chat_history = [
-            {
+
+        for msg in conversation:
+            content = msg.content
+            if msg.role == "assistant":
+                html = markdown.markdown(
+                    content, extensions=["fenced_code", "tables", "codehilite"]
+                )
+                html = bleach.clean(html, tags=ALLOWED_TAGS, attributes=ALLOWED_ATTRS, strip=True)
+                content = Markup(html)
+
+        chat_history.append({
                 "role": msg.role,
                 "content": msg.content,
                 "timestamp": msg.timestamp.strftime("%Y-%m-%d %H:%M")
-            }
-            for msg in conversation
-        ]
+            })
 
     return render_template("generate.html", chat_history=chat_history, selected_project=project)
 
@@ -295,6 +315,7 @@ def chat():
     db.session.add(ai_msg)
     db.session.commit()
 
+    conversation = ChatMessage.query.filter_by(user_id=user_id, project_id=project.id).order_by(ChatMessage.timestamp.asc()).all()
     chat_history = [
         {
             "role": msg.role,

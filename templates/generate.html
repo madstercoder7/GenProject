@@ -4,53 +4,54 @@
 
 {% block content %}
 <div class="generate-container d-flex flex-row">
-<aside id="sidebar" class="sidebar">
-    <div class="sidebar-header d-flex justify-content-between align-items-center">
-    <h4>Your Projects</h4>
-    <button id="newProjectBtn" class="btn btn-outline-glass">+ New Project</button>
-    </div>
-    <ul id="projectList" class="history-list"></ul>
-    <div id="emptyProjects" class="empty-history" style="display:none;">No projects yet. Create one!</div>
-</aside>
-<main class="main-content-area flex-grow-1">
-    <div id="chatHistory" class="mb-5">
-        {% for msg in chat_history %}
-            <div class="message mb-2 {{ 'bg-primary text-white' if msg.role == 'user' else 'bg-light text-dark' }}">
-                <div class="message-header">
-                    <span>{{ 'You' if msg.role == 'user' else 'AI Mentor' }}</span>
-                    <span class="timestamp">{{ msg.timestamp }}</span>
+    <aside id="sidebar" class="sidebar">
+        <div class="sidebar-header d-flex justify-content-between align-items-center">
+            <h4>Your Projects</h4>
+            <button id="newProjectBtn" class="btn btn-outline-glass">+ New Project</button>
+        </div>
+        <ul id="projectList" class="history-list"></ul>
+        <div id="emptyProjects" class="empty-history" style="display:none;">No projects yet. Create one!</div>
+    </aside>
+    <main class="main-content-area flex-grow-1">
+        <div id="chatHistory" class="mb-5">
+            {% for msg in chat_history %}
+                <div class="message mb-2 {{ 'user-message' if msg.role == 'user' else 'ai-message' }}">
+                    <div class="message-header d-flex justify-content-between">
+                        <span>{{ 'You' if msg.role == 'user' else 'AI Mentor' }}</span>
+                        <span class="timestamp">{{ msg.timestamp }}</span>
+                    </div>
+                    <div class="message-content">{{ msg.content|safe }}</div>
                 </div>
-                <div class="message-content">{{ msg.content|safe }}</div>
-            </div>
-        {% else %}
-            <p>No chat history yet.</p>
-        {% endfor %}
-    </div>
-    <div class="input-container">
-    <form id="chatForm" class="generate-form d-flex">
-        <input type="text" id="messageInput" class="form-control topic-input" placeholder="Ask a coding question..." autocomplete="off" />
-        <button type="submit" class="btn submit-btn">Send</button>
-    </form>
-    </div>
-</main>
+            {% else %}
+                <p>No chat history yet.</p>
+            {% endfor %}
+        </div>
+        <div class="input-container">
+            <form id="chatForm" class="generate-form d-flex">
+                <input type="text" id="messageInput" class="form-control topic-input" placeholder="Ask a coding question..." autocomplete="off" />
+                <button type="submit" class="btn submit-btn">Send</button>
+            </form>
+        </div>
+    </main>
 </div>
+
 <div class="modal" id="newProjectModal" tabindex="-1" style="display:none;">
-<div class="modal-dialog">
-    <div class="modal-content">
-    <form id="newProjectForm">
-        <div class="modal-header">
-        <h5 class="modal-title">New Project Idea</h5>
-        <button type="button" class="btn-close" id="closeProjectModal"></button>
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form id="newProjectForm">
+                <div class="modal-header">
+                    <h5 class="modal-title">New Project Idea</h5>
+                    <button type="button" class="btn-close" id="closeProjectModal"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="text" id="newProjectTitle" class="form-control" placeholder="Short Project Title" required />
+                    <textarea id="newProjectDesc" class="form-control mt-2" placeholder="Brief description (optional)"></textarea>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-primary">Create</button>
+                </div>
+            </form>
         </div>
-        <div class="modal-body">
-        <input type="text" id="newProjectTitle" class="form-control" placeholder="Short Project Title" required />
-        <textarea id="newProjectDesc" class="form-control mt-2" placeholder="Brief description (optional)"></textarea>
-        </div>
-        <div class="modal-footer">
-        <button type="submit" class="btn btn-primary">Create</button>
-        </div>
-    </form>
     </div>
-</div>
 </div>
 {% endblock %}
