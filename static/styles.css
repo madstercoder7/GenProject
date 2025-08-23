@@ -361,3 +361,32 @@ body {
     border-top: 1px solid var(--glass-border);
     color: var(--text-muted);
 }
+
+#deleteProjectModal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.6);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 1050;
+}
+
+#deleteProjectModal .modal-content {
+    background: #161b22;
+    color: #e6edf3;
+    padding: 20px;
+    border-radius: 10px;
+    width: 350px;
+    text-align: center;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
+}
+
+#deleteProjectModal .modal-actions {
+    margin-top: 15px;
+    display: flex;
+    justify-content: space-around;
+}

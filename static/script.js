@@ -1,4 +1,6 @@
 let selectedProjectId = null;
+let projectToDelete = null;
+
 const msgInput = $("messageInput");
 if (msgInput) {
     msgInput.addEventListener("keydown", (e) => {
@@ -226,25 +228,40 @@ document.addEventListener("click", (e) => {
         $("renameProjectModal").style.display = "block";
     }
     if (e.target.closest(".delete-btn")) {
-        const id = e.target.closest(".delete-btn").dataset.id;
-        safeFetch("/delete_project", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ project_id: id }),
-        })
-        .then(() => {
-            fetchProjects();
-            const chatDiv = $("chatHistory");
-            if (chatDiv) {
-                chatDiv.innerHTML = `<p class="text-gray-500">Select a project to start chatting.</p>`;
-            }
-            if (selectedProjectId == id) {
-                selectedProjectId = null;
-            }
-        })
-        .catch((err) => showToast(`Failed to delete: ${err.message}`));
+        projectToDelete = e.target.closest(".delete-btn").dataset.id;
+        $("deleteProjectModal").style.display = "flex";
     }
 });
+
+on("cancelDeleteBtn", "click", () => {
+    $("deleteProjectModal").style.display = "none";
+    projectToDelete = null;
+});
+
+on("confirmDeleteBtn", "click", () => {
+    if (!projectToDelete) return;
+
+    safeFetch("/delete_project", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ project_id: projectToDelete }),
+    })
+    .then(() => {
+        fetchProjects();
+        const chatDiv = $("chatHistory");
+        if (chatDiv) {
+            chatDiv.innerHTML = `<p class="text-gray-500">Select a project to start chatting.</p>`;
+        }
+        if (selectedProjectId === projectToDelete) {
+            selectedProjectId = null;
+        }
+    })
+    .catch((err) => showToast(`Failed to delete: ${err.message}`))
+    .finally(() => {
+        $("deleteProjectModal").style.display = "none";
+        projectToDelete = null;
+    });
+})
 
 window.addEventListener("load", () => {
     if ($("projectList")) fetchProjects();
