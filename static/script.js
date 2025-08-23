@@ -1,4 +1,14 @@
 let selectedProjectId = null;
+const msgInput = $("messageInput");
+if (msgInput) {
+    msgInput.addEventListener("keydown", (e) => {
+        if (e.key === "Enter" && !e.shiftKey) {
+            e.preventDefault();
+            const msg = msgInput.value.trim();
+            if (msg) sendMessage(msg);
+        }
+    });
+}
 
 function $(id) {
     return document.getElementById(id);
@@ -56,9 +66,17 @@ function fetchProjects() {
         if ($("emptyProjects")) $("emptyProjects").style.display = "none";
         data.forEach((project) => {
             const li = document.createElement("li");
-            li.textContent = project.topic;
-            li.className = "history-item";
-            li.onclick = () => selectedProjectId(project.public_id);
+            li.className = "history-item d-flex justify-content-between align-items-center";
+            li.innerHTML = `
+                <span class="flex-grow-1">${project.topic}</span>
+                <button class="btn btn-sm btn-outline-light me-1 rename-btn" data-id="${project.public_id}">
+                    <i class="fas fa-edit"></i>
+                </button>
+                <button class="btn btn-sm btn-outline-danger delete-btn" data-id="${project.public_id}">
+                    <i class="fas fa-trash"></i>
+                </button>
+            `;
+            li.querySelector("span").onclick = () => selectProject(project.public_id);
             list.appendChild(li);
         });
 
@@ -74,10 +92,18 @@ function fetchProjects() {
 function selectProject(publicId) {
     selectedProjectId = publicId;
     fetchChathistory();
+    const input = $("messageInput");
+    if (input) input.focus();
 }
 
 function sendMessage(message) {
     if (!selectedProjectId || !message) return;
+
+    const btn = $("sendBtn");
+    const spinner = $("loadingSpinner");
+    if (btn) btn.disabled = true;
+    if (spinner) spinner.style.display = "inline-block";
+
     safeFetch("/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -87,7 +113,11 @@ function sendMessage(message) {
         renderChatHistory(data.history);
         if ($("messageInput")) $("messageInput").value = "";
     })
-    .catch((err) => showToast(`Failed to send: ${err.message}`));
+    .catch((err) => showToast(`Failed to send: ${err.message}`))
+    .finally(() => {
+        if (btn) btn.disabled = false;
+        if (spinner) spinner.style.display = "none";
+    });
 }
 
 function fetchChathistory() {
@@ -116,6 +146,11 @@ function renderChatHistory(history) {
         if (msg.role === "assistant") {
             try {
                 formattedContent = marked.parse(msg.content);
+                setTimeout(() => {
+                    document.querySelectorAll("pre code").forEach((block) => {
+                        hljs.highlightElement(block);
+                    });
+                }, 0);
             } catch {
                 formattedContent = msg.content;
             }
@@ -140,6 +175,11 @@ on("newProjectBtn", "click", () => {
 on("closeProjectModal", "click", () => {
     if ($("newProjectModal")) $("newProjectModal").style.display = "none";
 });
+
+on("closeRenameModal", "click", () => {
+    if ($("renameProjectModal")) $("renameProjectModal").style.display = "none";
+})
+
 on("newProjectForm", "submit", (e) => {
     e.preventDefault();
     const title = $("newProjectTitle")?.value?.trim();
@@ -162,6 +202,48 @@ on("chatForm", "submit", (e) => {
     e.preventDefault();
     const msg = $("messageInput")?.value?.trim();
     if (msg) sendMessage(msg);
+});
+
+on("renameProjectForm", "submit", (e) => {
+    e.preventDefault();
+    const title = $("renameProjectTitle")?.value?.trim();
+    if (!title || !selectedProjectId) return;
+    safeFetch("/rename_project", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ project_id: selectedProjectId, topic: title }),
+    })
+    .then(() => {
+        $("renameProjectModal").style.display = "none";
+        fetchProjects();
+    })
+    .catch((err) => showToast(`Failed to rename: ${err.message}`));
+});
+
+document.addEventListener("click", (e) => {
+    if (e.target.closest(".rename-btn")) {
+        selectedProjectId = e.target.closest(".rename-btn").dataset.id;
+        $("renameProjectModal").style.display = "block";
+    }
+    if (e.target.closest(".delete-btn")) {
+        const id = e.target.closest(".delete-btn").dataset.id;
+        safeFetch("/delete_project", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ project_id: id }),
+        })
+        .then(() => {
+            fetchProjects();
+            const chatDiv = $("chatHistory");
+            if (chatDiv) {
+                chatDiv.innerHTML = `<p class="text-gray-500">Select a project to start chatting.</p>`;
+            }
+            if (selectedProjectId == id) {
+                selectedProjectId = null;
+            }
+        })
+        .catch((err) => showToast(`Failed to delete: ${err.message}`));
+    }
 });
 
 window.addEventListener("load", () => {

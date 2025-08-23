@@ -345,6 +345,10 @@ body {
     opacity: 0.9;
 }
 
+.spinner-border.text-accent {
+    color: var(--accent);
+}
+
 .timestamp {
     font-weight: 400;
     font-size: 0.85rem;

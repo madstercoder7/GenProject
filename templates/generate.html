@@ -11,6 +11,25 @@
         </div>
         <ul id="projectList" class="history-list"></ul>
         <div id="emptyProjects" class="empty-history" style="display:none;">No projects yet. Create one!</div>
+
+        <div class="modal" id="renameProjectModal" tabindex="-1" style="display: none;">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <form id="renameProjectForm">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Rename Project</h5>
+                            <button class="btn-close" type="button" id="closeRenameModal"></button>
+                        </div>
+                        <div class="modal-body">
+                            <input type="text" id="renameProjectTitle" class="form-control" required />
+                        </div>
+                        <div class="modal-footer">
+                            <button class="btn btn-primary" type="submit">Save</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
     </aside>
     <main class="main-content-area flex-grow-1">
         <div id="chatHistory" class="mb-5">
@@ -30,6 +49,7 @@
             <form id="chatForm" class="generate-form d-flex">
                 <input type="text" id="messageInput" class="form-control topic-input" placeholder="Ask a coding question..." autocomplete="off" />
                 <button type="submit" class="btn submit-btn">Send</button>
+                <div class="spinner-border text-accent ms-2" id="loadingSpinner" style="display: none; width: 1.5rem; height: 1.5rem;" role="status"></div>
             </form>
         </div>
     </main>

@@ -252,17 +252,15 @@ def get_generate():
         for msg in conversation:
             content = msg.content
             if msg.role == "assistant":
-                html = markdown.markdown(
-                    content, extensions=["fenced_code", "tables", "codehilite"]
-                )
+                html = markdown.markdown(content, extensions=["fenced_code", "tables", "codehilite"])
                 html = bleach.clean(html, tags=ALLOWED_TAGS, attributes=ALLOWED_ATTRS, strip=True)
                 content = Markup(html)
 
-        chat_history.append({
-                "role": msg.role,
-                "content": msg.content,
-                "timestamp": msg.timestamp.strftime("%Y-%m-%d %H:%M")
-            })
+            chat_history.append({
+                    "role": msg.role,
+                    "content": content,
+                    "timestamp": msg.timestamp.strftime("%Y-%m-%d %H:%M")
+                })
 
     return render_template("generate.html", chat_history=chat_history, selected_project=project)
 
@@ -337,6 +335,36 @@ def create_project():
     db.session.add(new_project)
     db.session.commit()
     return jsonify({"public_id": new_project.public_id})
+
+@app.route("/rename_project", methods=["POST"])
+@login_required
+def rename_project():
+    user_id = session.get("user_id")
+    data = request.get_json()
+    project_id = data.get("project_id")
+    topic = bleach.clean(data.get("topic", ""))
+    project = ProjectIdea.query.filter_by(public_id=project_id, user_id=user_id).first()
+    if not project:
+        return jsonify({"error": "Project not found"}), 404
+    project.topic = topic
+    db.session.commit()
+    return jsonify({"success": True})
+
+@app.route("/delete_project", methods=["POST"])
+@login_required
+def delete_project():
+    user_id = session.get("user_id")
+    data = request.get_json()
+    project_public_id = data.get("project_id")
+    project = ProjectIdea.query.filter_by(public_id=project_public_id, user_id=user_id).first()
+    if not project:
+        return jsonify({"error": "Project not found"}), 404
+    
+    ChatMessage.query.filter_by(project_id=project.id, user_id=user_id).delete()
+
+    db.session.delete(project)
+    db.session.commit()
+    return jsonify({"success": True})
 
 @app.route('/health')
 def health():
