@@ -63,7 +63,7 @@ function fetchProjects() {
         });
 
         if (!selectedProjectId && data[0]?.public_id) {
-            selectedProjectId(data[0].public_id);
+            selectProject(data[0].public_id);
         }
     })
     .catch((err) => {
