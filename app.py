@@ -9,6 +9,7 @@ from utils import generate_project_idea, login_required, validate_input
 from datetime import datetime, timedelta
 import os
 import secrets
+import re
 import markdown
 from markupsafe import Markup
 import bleach
@@ -311,6 +312,21 @@ def chat():
         content=ai_reply
     )
     db.session.add(ai_msg)
+
+    if project.topic.startswith("Untitled Project"):
+        title = None
+        for line in ai_reply.splitlines():
+            if "Project Title:" in line:
+                title = line.replace("Project Title:", "").strip()
+                break
+        if not title:
+            title = ai_reply.split("\n")[0][25:50]
+
+        if title:
+            title = re.sub(r"[*_`]+", "", title).strip()
+            
+        project.topic = title or "AI Project"
+
     db.session.commit()
 
     conversation = ChatMessage.query.filter_by(user_id=user_id, project_id=project.id).order_by(ChatMessage.timestamp.asc()).all()
@@ -322,14 +338,14 @@ def chat():
         }
         for msg in conversation
     ]
-    return jsonify({"reply": ai_reply, "history": chat_history})
+    return jsonify({"reply": ai_reply, "project_title": project.topic, "project_id": project.public_id, "history": chat_history})
 
 @app.route("/create_project", methods=["POST"])
 @login_required
 def create_project():
     user_id = session.get("user_id")
     data = request.get_json()
-    topic = bleach.clean(data.get("topic", ""))
+    topic = bleach.clean(data.get("topic", "")) or "Untitled Project"
     content = bleach.clean(data.get("content", ""))
     new_project = ProjectIdea(user_id=user_id, topic=topic, content=content)
     db.session.add(new_project)

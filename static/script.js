@@ -114,6 +114,13 @@ function sendMessage(message) {
     .then((data) => {
         renderChatHistory(data.history);
         if ($("messageInput")) $("messageInput").value = "";
+
+        if (data.project_title && data.project_id) {
+            const item = document.querySelector(`.history-item .rename-btn[data-id="${data.project_id}"]`);
+            if (item) {
+                item.parentElement.querySelector("span").textContent = data.project_title;
+            }
+        }
     })
     .catch((err) => showToast(`Failed to send: ${err.message}`))
     .finally(() => {
@@ -171,7 +178,18 @@ function renderChatHistory(history) {
 }
 
 on("newProjectBtn", "click", () => {
-    if ($("newProjectModal")) $("newProjectModal").style.display = "block";
+    safeFetch("/create_project", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ topic: "Untitled Project", content: "" }),
+    })
+    .then((data) => {
+        fetchProjects();
+        if (data?.public_id) {
+            selectProject(data.public_id);
+        }
+    })
+    .catch((err) => showToast(`Failed to create project: ${err.message}`));
 });
 
 on("closeProjectModal", "click", () => {
