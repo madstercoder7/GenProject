@@ -40,7 +40,7 @@ def generate_project_idea(messages, max_retries=3):
     for attempt in range(max_retries):
         try:
             response = client.chat.completions.create(
-                model="llama3-70b-8192",
+                model="llama-3.1-8b-instant",
                 messages=messages,
                 max_tokens=1000,
                 temperature=0.7,
