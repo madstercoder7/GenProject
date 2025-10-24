@@ -68,5 +68,4 @@ flask run
 Pull requests are welcome! For major changes, please open an issue first to discuss what you would like to change
 
 ## Upcoming Features
-- Converting to a chat style AI assistant
 - Adding OAuth
